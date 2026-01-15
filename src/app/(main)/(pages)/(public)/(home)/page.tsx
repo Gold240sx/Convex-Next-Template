@@ -8,7 +8,6 @@ import APP_CONFIG from "@/app-config";
 import NewsBanner from "@/components/myComponents/Navbar/newsBanner";
 import TextCycle from "@/components/hover.dev/textCycle"
 import Socials from "@/components/myComponents/Footer/socials";
-import { redirect } from "next/navigation";
 import HomeContent from "./content"
 import { SignInSection } from "@/components/auth/SignInSection";
 import { auth } from '@clerk/nextjs/server'
@@ -16,10 +15,6 @@ import { auth } from '@clerk/nextjs/server'
 const Home: FC = async () => {
   const { userId } = await auth()
   const { isUnderDevelopment } = APP_CONFIG
-
-  // if (userId) {
-  //   return redirect("/dashboard"); //works, just optional
-  // }
 
   return (
     <div className="">
