@@ -40,9 +40,22 @@ export const createPost = mutation({
     if (userId === null) {
       throw new Error("Not authenticated");
     }
+    const identity = await ctx.auth.getUserIdentity();
     await ctx.db.insert("posts", {
       text: args.text,
       authorId: userId,
+      authorEmail: identity?.email ?? "Unknown",
+    });
+  },
+});
+
+export const submitContactForm = mutation({
+  args: { name: v.string(), email: v.string(), message: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("contact_form", {
+      name: args.name,
+      email: args.email,
+      message: args.message,
     });
   },
 });
