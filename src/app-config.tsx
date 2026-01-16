@@ -13,6 +13,25 @@ const APP_CONFIG: appConfigType = {
 	adminContext: {
 		adminEmail: "240designworks@gmail.com",
 	},
+	siteContent: {
+		widgets: {
+			ChatBot: {
+				supportStaff: [
+					{
+						name: "Michael Martell",
+						photo: "/images/michael-martell.jpg",
+					},
+				],
+				socialMedia: [
+					{
+						name: "Twitter",
+						url: "https://twitter.com/240designworks",
+						icon: "https://uploadthing.com/f/1674332432204-twitter",
+					},
+				],
+			}
+		}
+	},
 	adminLinks: {
 		PostHog: "'https://uploadthing.com/dashboard/gold240sx-personal-team'",
 		UploadThing: "'https://uploadthing.com/dashboard/gold240sx-personal-team'",
@@ -82,6 +101,21 @@ type appConfigType = {
 		stackOverflow: string
 		buyMeACoffee: string
 	}
+	siteContent: {
+		widgets: {
+			ChatBot: {
+				supportStaff: {
+					name: string
+					photo: string
+				}[]
+				socialMedia: {
+					name: string
+					url: string
+					icon: string
+				}[]
+			}
+		}
+	}	
 	storeConfig: {
 		CURRENCY: string
 		MIN_AMOUNT: number

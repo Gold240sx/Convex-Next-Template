@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { AppSidebar } from "@/components/layout/dashboard/sidebar/AppSidebar";
 import { SidebarProvider } from "@/components/shadcn/sidebar";
+import "@/styles/globals.css";
 
 // Loading component for the sidebar
 function SidebarSkeleton() {
@@ -42,17 +43,16 @@ export default function DashboardLayout({
   return (
     <SidebarProvider>
       <div className="relative flex max-h-screen min-h-screen w-full flex-col">
-        {/* <NavbarClient /> */}
         <div
           id="layout-container"
-          className="flex h-screen w-full flex-1 overflow-hidden"
+          className="flex h-screen overflow-hidden"
         >
           <Suspense fallback={<SidebarSkeleton />}>
             <AppSidebar />
           </Suspense>
           {/* make pl-0 only if the sidebar is not collapsed */}
-          <div className={`flex-1 p-4 md:pl-0`}>
-            <main className="relative z-10 h-full w-full overflow-auto rounded-xl bg-zinc-50 px-4 pb-12 shadow-2xl shadow-gray-300 dark:bg-gray-800 dark:shadow-black/80 md:ml-0">
+          <div className={`flex-1 w-auto px-4 md:pl-0`}>
+            <main className="relative z-10 h-auto w-full overflow-auto rounded-4xl h-full mb-8 bg-zinc-50 px-3 mt-4 pb-6 shadow-2xl shadow-gray-400 dark:bg-gray-800 dark:shadow-black/80 md:ml-0">
               <Suspense>{children}</Suspense>
             </main>
           </div>

@@ -8,5 +8,9 @@ import {
 import { ThemeProvider as ThemeProviderContext } from "@/context/ThemeContext"
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-	return <ThemeProviderContext>{children}</ThemeProviderContext>
+	return (
+		<NextThemesProvider {...props}>
+			<ThemeProviderContext>{children}</ThemeProviderContext>
+		</NextThemesProvider>
+	)
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { auth } from '@clerk/nextjs/server'
+import { useAuth } from '@clerk/nextjs'
 
-export async function useAdminCheck() {
-   const { has } = await auth()
+export function useAdminCheck() {
+  const { has, isLoaded } = useAuth()
   
-  const isAdmin = has({ role: 'org:admin' })
-  return isAdmin
+  if (!isLoaded) return false
+  
+  return has?.({ role: 'org:admin' }) ?? false
 }

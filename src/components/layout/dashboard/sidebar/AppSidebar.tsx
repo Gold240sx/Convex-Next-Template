@@ -20,7 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { SectionGroup, Section } from "./sidebarTypes";
 import { ChevronUp, LogOut } from "lucide-react";
@@ -81,14 +81,20 @@ export function AppSidebar({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const isAdminRoute = pathname?.startsWith("/admin");
   const role = isAdminRoute ? "admin" : "user";
   const [expandedSectionId, setExpandedSectionId] = useState<string>(() =>
     getInitialExpandedSections(role === "admin" ? AdminGroups : UserGroups),
   );
   const { signOut } = useClerk()
-    const { user, isLoaded } = useUser()
+  const { user, isLoaded } = useUser()
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const isCurrentPath = (url: string) => pathname === url;
 
@@ -108,7 +114,18 @@ export function AppSidebar({
 
   const toggleSection = (sectionId: string, hasItems: boolean) => {
     if (!hasItems) return;
-    setExpandedSectionId((prev) => (prev === sectionId ? "" : sectionId));
+    
+    // If sidebar is collapsed, expand it first
+    if (state === "collapsed") {
+      toggleSidebar();
+      // Set the section to expand after sidebar opens
+      setTimeout(() => {
+        setExpandedSectionId(sectionId);
+      }, 100);
+    } else {
+      // Normal toggle behavior when sidebar is expanded
+      setExpandedSectionId((prev) => (prev === sectionId ? "" : sectionId));
+    }
   };
 
   const handleSignOut = async () => {
@@ -169,7 +186,7 @@ export function AppSidebar({
   return (
     <div
       id="app-sidebar"
-      className="relative max-h-screen text-lg [&_*]:select-none"
+      className={cn("relative max-h-screen text-lg [&_*]:select-none flex-1 w-fit", state === "collapsed" ? "max-w-12" : "max-w-52 !w-fit")}
     >
       <Sidebar
         collapsible="icon"
@@ -180,22 +197,23 @@ export function AppSidebar({
           <div className="flex h-full flex-col">
             {/* Logo and Trigger Section */}
             <div
-              className="mt-8 flex items-center justify-between px-4 data-[sidebar=collapsed]:justify-center"
+              className="mt-4 flex items-center justify-between px-2 data-[sidebar=collapsed]:w-12 data-[sidebar=collapsed]:justify-center"
               data-sidebar={state}
             >
               <Link
                 href="/"
                 className="flex items-center gap-2 data-[sidebar=collapsed]:hidden"
                 data-sidebar={state}
+                prefetch={false}
               >
                 <Image
                   src={websiteLogo}
                   alt="Website Logo"
-                  className="h-6 w-fit min-w-10 dark:invert"
+                  className="h-12 w-fit ml-2 min-w-10 dark:invert"
                   priority
                 />
               </Link>
-              <SidebarTrigger className="h-10 w-10 p-2 text-black hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800 [&>svg]:h-5 [&>svg]:w-5" />
+              <SidebarTrigger className="h-10 w-10 p-2 text-black hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800 [&>svg]:h-7 [&>svg]:w-7" />
             </div>
 
             {/* Sidebar Items */}
@@ -228,6 +246,7 @@ export function AppSidebar({
                             <Link
                               className={`${group.link ? "hover:text-blue-600" : "cursor-default"}`}
                               href={group.link ?? "#"}
+                              prefetch={false}
                             >
                               {group.title}
                             </Link>
@@ -283,7 +302,7 @@ export function AppSidebar({
                                               state !== "collapsed" && "hidden",
                                             )}
                                           >
-                                            <Link href={section.link ?? "#"}>
+                                            <Link href={section.link ?? "#"} prefetch={false}>
                                               {section.title}
                                             </Link>
                                           </TooltipContent>
@@ -294,7 +313,7 @@ export function AppSidebar({
                                       className="flex flex-1 items-center data-[sidebar=collapsed]:hidden"
                                       data-sidebar={state}
                                     >
-                                      <Link href={section.link ?? "#"}>
+                                      <Link href={section.link ?? "#"} prefetch={false}>
                                         <span
                                           className={cn(
                                             "flex-1 text-left text-lg font-medium text-sidebar-foreground/70 transition-all duration-200 ease-in group-hover/section:pl-1 group-hover/section:text-sky-600 dark:group-hover/section:text-sky-300",
@@ -334,6 +353,7 @@ export function AppSidebar({
                                       <Link
                                         key={item.url}
                                         href={item.url}
+                                        prefetch={false}
                                         className={cn(
                                           "sidebar-menu-item",
                                           "relative flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-lg font-medium",
@@ -416,7 +436,7 @@ export function AppSidebar({
                   </div>
                 )}
               <SidebarGroup>
-                {!isLoaded ? (
+                {!mounted || !isLoaded ? (
                   <div className="flex items-center gap-3 py-2">
                     <div className="h-8 w-8 animate-pulse-opacity rounded-full bg-gray-200 dark:bg-gray-700"></div>
                     <div className="flex flex-col space-y-2">

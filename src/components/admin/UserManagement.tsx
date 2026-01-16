@@ -30,16 +30,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shadcn/dropdown-menu"
 import { useToast } from "@/hooks/use-toast"
+import { useSearch } from "@/context/SearchContext"
 
 export function UserManagement() {
   const [users, setUsers] = useState<any[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
+  const { query, setQuery, setPlaceholder } = useSearch()
   const router = useRouter()
   const { toast } = useToast()
   const limit = 5
+
+  useEffect(() => {
+    setPlaceholder("Search by name or email")
+    return () => setPlaceholder("Search...")
+  }, [setPlaceholder])
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -59,6 +65,10 @@ export function UserManagement() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    setPage(1)
+  }, [query])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -105,36 +115,36 @@ export function UserManagement() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Active Users</h2>
-          <p className="text-zinc-500 text-sm">Manage and view all registered users in your application.</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Active Users</h2>
+          <p className="text-gray-500 dark:text-zinc-500 text-sm">Manage and view all registered users in your application.</p>
         </div>
-        <div className="relative w-full sm:w-80">
+        <div className="hidden relative w-full sm:w-80">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <Input
             placeholder="Search by name or email..."
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value)
+              // Context takes care of this now
               setPage(1)
             }}
-            className="bg-zinc-900/50 border-zinc-800 pl-10 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500 transition-all"
+            className="bg-white/50 border-border dark:bg-zinc-900/50 pl-10 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-600 focus-visible:ring-blue-500 transition-all"
           />
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/40 backdrop-blur-md shadow-2xl">
+      <div className="overflow-hidden rounded-2xl border border-gray-200/60 dark:border-white/10 bg-white/40 dark:bg-zinc-950/40 backdrop-blur-md shadow-xl dark:shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-zinc-800 bg-zinc-900/40">
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-zinc-500">User Identity</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-zinc-500 hidden md:table-cell">Contact</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-zinc-500">Status</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-zinc-500">Joined Date</th>
-                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-zinc-500 text-right">Actions</th>
+              <tr className="border-b border-gray-200/60 dark:border-white/10 bg-gray-100/80 dark:bg-zinc-900/60">
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">User Identity</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500 hidden md:table-cell">Contact</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Status</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">Joined Date</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800">
+            <tbody className="divide-y divide-gray-200/60 dark:divide-white/10">
               <AnimatePresence mode="wait">
                 {loading ? (
                   Array.from({ length: limit }).map((_, i) => (
@@ -172,12 +182,12 @@ export function UserManagement() {
                       onClick={() => router.push(`/admin/${user.id}`)}
                       className="group hover:bg-white/[0.04] cursor-pointer transition-colors"
                     >
-                      <td className="px-6 py-5 font-medium text-white">
+                      <td className="px-6 py-5 font-medium text-gray-900 dark:text-white">
                         <div className="flex items-center gap-4">
                           <div className="relative">
-                            <Avatar className="h-11 w-11 border-2 border-zinc-800 group-hover:border-blue-500/50 transition-colors">
+                            <Avatar className="h-11 w-11 border-2 border-gray-200/60 dark:border-white/10 group-hover:border-blue-500/50 transition-colors">
                               <AvatarImage src={user.imageUrl} alt={`${user.firstName} ${user.lastName}`} />
-                              <AvatarFallback className="bg-zinc-800 text-zinc-400">
+                              <AvatarFallback className="bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-zinc-400">
                                 <UserIcon className="h-5 w-5" />
                               </AvatarFallback>
                             </Avatar>
@@ -199,8 +209,8 @@ export function UserManagement() {
                       </td>
                       <td className="px-6 py-5 hidden md:table-cell">
                         <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2 text-sm text-zinc-300">
-                            <Mail className="h-3.5 w-3.5 text-zinc-500" />
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-zinc-300">
+                            <Mail className="h-3.5 w-3.5 text-gray-400 dark:text-zinc-500" />
                             {user.emailAddresses?.[0]?.emailAddress || "No email"}
                           </div>
                         </div>
@@ -232,15 +242,15 @@ export function UserManagement() {
                           <DropdownMenuTrigger asChild>
                             <Button 
                               variant="ghost" 
-                              className="h-8 w-8 p-0 text-zinc-500 hover:text-white hover:bg-zinc-800"
+                              className="h-8 w-8 p-0 text-gray-400 dark:text-zinc-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 bg-zinc-950 border-zinc-800 text-zinc-300">
+                          <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-zinc-950 border border-gray-200/60 dark:border-white/10 text-gray-700 dark:text-zinc-300">
                             <DropdownMenuLabel>User Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator className="bg-zinc-800" />
+                            <DropdownMenuSeparator className="bg-gray-100 dark:bg-zinc-800" />
                             {user.banned ? (
                               <DropdownMenuItem 
                                 onClick={() => handleUnban(user.id)}
@@ -252,7 +262,7 @@ export function UserManagement() {
                             ) : (
                               <DropdownMenuItem 
                                 onClick={() => handleBan(user.id)}
-                                className="focus:bg-zinc-900 focus:text-red-500 cursor-pointer"
+                                className="focus:bg-gray-100 dark:focus:bg-zinc-900 focus:text-red-500 cursor-pointer"
                               >
                                 <Ban className="mr-2 h-4 w-4" />
                                 Ban User
@@ -298,13 +308,13 @@ export function UserManagement() {
         </div>
 
         {/* Improved Pagination */}
-        <div className="flex flex-col sm:flex-row items-center justify-between border-t border-zinc-800 bg-zinc-900/20 px-6 py-4 gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between border-t border-gray-200/60 dark:border-white/10 bg-gray-100/60 dark:bg-zinc-900/40 px-6 py-4 gap-4">
           <div className="flex items-center gap-2">
-             <div className="text-xs font-semibold text-zinc-500 uppercase tracking-widest bg-zinc-900 px-2.5 py-1 rounded-md border border-zinc-800">
+             <div className="text-xs font-semibold text-gray-500 dark:text-zinc-500 uppercase tracking-widest bg-gray-100 dark:bg-zinc-900 px-2.5 py-1 rounded-md border border-gray-200/60 dark:border-white/10">
                 Page {page} of {Math.max(1, totalPages)}
              </div>
-             <p className="text-sm text-zinc-500">
-                <span className="text-zinc-300 font-medium">{totalCount}</span> total members
+             <p className="text-sm text-gray-500 dark:text-zinc-500">
+                <span className="text-gray-900 dark:text-zinc-300 font-medium">{totalCount}</span> total members
              </p>
           </div>
           
@@ -317,7 +327,7 @@ export function UserManagement() {
                   setPage(page - 1);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-900 transition-all h-9 px-4"
+              className="bg-white dark:bg-zinc-900 border-gray-200/60 dark:border-white/10 text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 transition-all h-9 px-4"
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
               Previous
@@ -330,7 +340,7 @@ export function UserManagement() {
                   setPage(page + 1);
                   window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-900 transition-all h-9 px-4"
+              className="bg-white dark:bg-zinc-900 border-gray-200/60 dark:border-white/10 text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 transition-all h-9 px-4"
             >
               Next
               <ChevronRight className="h-4 w-4 ml-1" />

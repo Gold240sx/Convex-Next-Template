@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.clerk.dev",
       },
+       {
+        protocol: 'https',
+        hostname: 'uploadthing.com',
+        pathname: '/**',
+      },
     ],
   },
 };

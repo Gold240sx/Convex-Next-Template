@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -89,7 +90,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.705 0.213 47.604);
+  --primary: oklch(60.26% 0.1055 184.883);
   --primary-foreground: oklch(0.98 0.016 73.684);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
@@ -123,4 +124,185 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+
+/* Basic reset */
+* {
+  border-color: var(--color-border);
+  outline-color: var(--color-ring);
+  outline-width: 0;
+}
+
+*:focus-visible {
+  outline-width: 2px;
+  outline-style: solid;
+  outline-offset: 2px;
+}
+
+/* Theme toggle button styles */
+.theme-toggle-button {
+  border-radius: 0.5rem;
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-toggle-button:hover {
+  background-color: var(--muted);
+}
+
+.dark .theme-toggle-button {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.dark .theme-toggle-button:hover {
+  background-color: var(--muted);
+}
+
+.theme-toggle-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.theme-toggle-icon.sun {
+  color: #f59e0b;
+}
+
+.theme-toggle-icon.moon {
+  color: #4338ca;
+}
+
+/* Theme toggle button animations */
+.theme-toggle-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.theme-toggle-button:hover {
+  background-color: hsl(var(--secondary));
+}
+
+.animate-theme-toggle {
+  animation: pulse 0.3s ease;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.theme-toggle-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.theme-toggle-icon.sun {
+  color: hsl(47, 95%, 55%);
+}
+
+.theme-toggle-icon.moon {
+  color: hsl(217, 50%, 50%);
+}
+
+@layer base {
+  body {
+    @apply text-foreground;
+  }
+  :root {
+    --radius: 0.5rem;
+    --rounded-5xl: 2rem !important;
+    --rounded-6xl: 2.5rem !important;
+  }
+}
+
+@theme inline {
+  --color-border: var(--color-border);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+#app-sidebar,
+#app-sidebar *,
+#app-sidebar::before,
+#app-sidebar::after,
+#app-sidebar > *,
+#app-sidebar > * > *,
+#app-sidebar div,
+#app-sidebar h1,
+#app-sidebar h2,
+#app-sidebar h3,
+#app-sidebar span,
+#app-sidebar p,
+#app-sidebar a,
+#app-sidebar button {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* hide all scrollbars */
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none !important;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+.animate-theme-toggle {
+  animation: theme-toggle 0.5s ease-in-out;
+}
+
+.perspective-3d {
+  perspective-origin: 50% 50%;
+  perspective: 900px;
+}
+
+.rotate-y60-z12 {
+  transform: rotateY(-30deg) rotateZ(12deg) rotateX(18deg) translateX(-50%);
+  transform-style: preserve-3d;
+  transform-origin: center;
+  transform-box: fill-box;
+  scale: 400%;
+}
+
+.icon-svg svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+button svg,
+button * {
+  cursor: pointer !important;
 }

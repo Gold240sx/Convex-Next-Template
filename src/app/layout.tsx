@@ -8,15 +8,28 @@ import { TopLoader } from "next-top-loader";
 import { BreakpointOverlay } from "@/components/myComponents/breakpoint-overlay";
 import { Toaster } from "@/components/shadcn/toaster";
 import { ClerkProvider } from '@clerk/nextjs'
+import { cn } from "@/lib/utils";
+import { Roboto, Roboto_Slab } from "next/font/google";
+import { Pacifico } from "next/font/google";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+
+const roboto = Roboto({
   subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+  variable: "--font-roboto",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const robotoSlab = Roboto_Slab({
   subsets: ["latin"],
+  display: "swap",
+  variable: "--font-roboto-slab",
+});
+
+const pacifico = Pacifico({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-pacifico",
 });
 
 export const metadata: Metadata = {
@@ -36,22 +49,17 @@ export default function RootLayout({
 
   return (
           <html lang="en" suppressHydrationWarning>
-            <body className="min-h-screen bg-black overflow-hidden h-fit w-screen bg-background antialiased relative">        
-              
+      <body className={cn("min-h-screen overflow-x-hidden h-fit antialiased relative bg-gray-100 dark:bg-gray-900",
+                    roboto.variable,
+                    robotoSlab.variable,
+                    pacifico.variable,
+                    isUnderDevelopment && "min-h-screen"
+                  )} suppressHydrationWarning>        
               <ClerkProvider>
-              <Providers>
                 <TopLoader />
-               	{isUnderDevelopment ? (
-                  <div className="overflow-x-hidden min-h-screen w-full">
-                    <FuzzyOverlay />
-                      {children}
-                  </div>
-                ):(
-                <>
-                  {/* {children} */}
-                  </>
-                )}
-              </Providers>
+                <Providers>
+                  {children}
+                </Providers>
               </ClerkProvider>
               <BreakpointOverlay />
 				      <Toaster />

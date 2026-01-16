@@ -24,6 +24,8 @@ if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL)
 
 
+import { SearchProvider } from "@/context/SearchContext"
+
 export function Providers({ children }: { children: ReactNode }) {
 
 
@@ -36,9 +38,11 @@ export function Providers({ children }: { children: ReactNode }) {
 			enableSystem
 			disableTransitionOnChange>
 			<NavigationProvider>
-				<PostHogProvider client={posthog}>
-					{children}
-				</PostHogProvider>
+				<SearchProvider>
+					<PostHogProvider client={posthog}>
+						{children}
+					</PostHogProvider>
+				</SearchProvider>
 			</NavigationProvider>
 		</ThemeProvider>
 		</ConvexProviderWithClerk>

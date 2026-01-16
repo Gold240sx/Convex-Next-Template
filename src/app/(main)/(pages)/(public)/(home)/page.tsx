@@ -11,6 +11,8 @@ import Socials from "@/components/myComponents/Footer/socials";
 import HomeContent from "./content"
 import { SignInSection } from "@/components/auth/SignInSection";
 import { auth } from '@clerk/nextjs/server'
+import FuzzyOverlay from "@/components/hover.dev/fuzzyOverlay";
+import ChatbotWidget from "@/components/myComponents/Chatbot/ChatBotWidget";
 
 const Home: FC = async () => {
   const { userId } = await auth()
@@ -18,6 +20,7 @@ const Home: FC = async () => {
 
   return (
     <div className="">
+		                   <FuzzyOverlay />
      {isUnderDevelopment &&  (
       <NewsBanner
 					props={{
@@ -41,6 +44,7 @@ const Home: FC = async () => {
 						alt="Main Logo"
 						className="animate-pulse w-48 mb-10"
 						src={MainLogoInvert}
+						loading="eager"
 						width={200}
 						height={200}
 					/>
@@ -69,6 +73,7 @@ const Home: FC = async () => {
           <div className="flex flex-wrap justify-center gap-4">
 							<Socials />
 						</div>
+						<ChatbotWidget />
         </main>
       </div>
     </div>

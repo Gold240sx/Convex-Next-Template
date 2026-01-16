@@ -8,6 +8,7 @@ import {
   BriefcaseBusiness,
   DatabaseIcon,
   FileText,
+  Bell,
   BellDot,
   BookCheck,
   Home,
@@ -77,6 +78,7 @@ import {
   Target,
   Medal,
   TicketX,
+  Palette,
 } from "lucide-react";
 
 export const AdminGroups: SectionGroup[] = [
@@ -115,6 +117,11 @@ export const AdminGroups: SectionGroup[] = [
         iconBgColor:
           "bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 group-hover/section:bg-red-200 dark:group-hover/section:bg-red-800",
         items: [
+          {
+            title: "Activity Alerts",
+            url: "/admin/notifications",
+            icon: Bell,
+          },
           {
             title: "User Messages",
             url: "/admin/user-messages",
@@ -297,6 +304,16 @@ export const AdminGroups: SectionGroup[] = [
         iconBgColor:
           "bg-sky-100 dark:bg-sky-900 hover:bg-sky-200 dark:hover:bg-sky-800 group-hover/section:bg-sky-200 dark:group-hover/section:bg-sky-800",
         link: "/admin/technologies",
+      },
+      // Themes
+      {
+        id: "themes",
+        title: "Themes",
+        icon: Palette,
+        iconColor: "text-orange-600 dark:text-orange-400",
+        iconBgColor:
+          "bg-orange-100 dark:bg-orange-900 hover:bg-orange-200 dark:hover:bg-orange-800 group-hover/section:bg-orange-200 dark:group-hover/section:bg-orange-800",
+        link: "/admin/pages/themes",
       },
       // Projects
       {

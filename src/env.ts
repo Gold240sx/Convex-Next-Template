@@ -3,6 +3,8 @@ import { z } from "zod"
 
 export const env = createEnv({
 	server: {
+		UPLOADTHING_TOKEN: z.string().min(1),
+		OPENAI_API_KEY: z.string().min(1),
 		CONVEX_DEPLOY_KEY: z.string().min(1),
 		CONVEX_DEPLOYMENT_ID: z.string().min(1),
 		AUTH_GITHUB_ID: z.string().min(1),
@@ -26,6 +28,8 @@ export const env = createEnv({
 	NEXT_PUBLIC_CONVEX_URL: z.string().min(1),
 	},
 	runtimeEnv: {
+		UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
+		OPENAI_API_KEY: process.env.OPENAI_API_KEY,
 		CONVEX_DEPLOY_KEY: process.env.CONVEX_DEPLOY_KEY,
 		CONVEX_DEPLOYMENT_ID: process.env.CONVEX_DEPLOYMENT_ID,
 		AUTH_GITHUB_ID: process.env.AUTH_GITHUB_ID,

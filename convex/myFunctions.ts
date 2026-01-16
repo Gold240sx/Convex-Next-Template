@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query, mutation, action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { ConversationMessage } from "../src/types/messages";
 
 // Write your Convex functions in any file inside this directory (`convex`).
 // See https://docs.convex.dev/functions for more.
@@ -57,6 +58,306 @@ export const submitContactForm = mutation({
       email: args.email,
       message: args.message,
     });
+  },
+});
+
+export const submitChatbotMessageForm = mutation({
+  args: {
+    name: v.string(),
+    email: v.string(),
+    message: v.string(),
+
+    subject: v.optional(v.string()),
+    contactReason: v.optional(v.union(
+      v.literal("general"),
+      v.literal("project_inquiry"),
+      v.literal("support"),
+      v.literal("feedback"),
+      v.literal("partnership"),
+    )),
+    conversation: v.optional(v.object({
+      summary: v.optional(v.string()),
+      messages: v.array(v.object({
+        role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
+        content: v.string(),
+        createdAt: v.number(),
+      }))
+    })),
+    consent: v.boolean(),
+  },
+
+
+  handler: async (ctx, args) => {
+    if (args.conversation?.messages && args.conversation.messages.length > 500) {
+      throw new Error("Conversation too long");
+    }
+
+    args.conversation?.messages?.forEach((m: ConversationMessage) => {
+      if (m.content.length > 8000) {
+        throw new Error("Message too long");
+      }
+    });
+    await ctx.db.insert("contactMessages", {
+      ...args,
+      consent: true,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+
+export const getAllContactMessages = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("contactMessages")
+      .filter((q) => 
+        q.or(
+          q.eq(q.field("archivedAt"), undefined),
+          q.eq(q.field("archivedAt"), null)
+        )
+      )
+      .order("desc")
+      .collect();
+  },
+});
+
+export const getArchivedContactMessages = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("contactMessages")
+      .filter((q) => 
+        q.and(
+          q.neq(q.field("archivedAt"), undefined),
+          q.neq(q.field("archivedAt"), null)
+        )
+      )
+      .order("desc")
+      .collect();
+  },
+});
+
+export const getUnreadMessageCount = query({
+  args: {},
+  handler: async (ctx) => {
+    const unread = await ctx.db
+      .query("contactMessages")
+      .filter((q) => 
+        q.and(
+            q.or(
+                q.eq(q.field("archivedAt"), undefined),
+                q.eq(q.field("archivedAt"), null)
+            ),
+            q.or(
+                q.eq(q.field("readAt"), undefined),
+                q.eq(q.field("readAt"), null)
+            )
+        )
+      )
+      .collect();
+    return unread.length;
+  },
+});
+
+export const getContactMessageById = query({
+  args: { id: v.id("contactMessages") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});
+
+export const markContactMessageAsRead = mutation({
+  args: { id: v.id("contactMessages") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      readAt: Date.now(),
+    });
+  },
+});
+
+export const markContactMessageAsUnread = mutation({
+  args: { id: v.id("contactMessages") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      readAt: null,
+      archivedAt: null, // Move back to inbox if it was archived
+    });
+  },
+});
+
+export const archiveContactMessage = mutation({
+  args: { id: v.id("contactMessages") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { archivedAt: Date.now() });
+  },
+});
+
+export const unarchiveContactMessage = mutation({
+  args: { id: v.id("contactMessages") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { archivedAt: null });
+  },
+});
+
+export const createTaskFromMessage = mutation({
+  args: { 
+    messageId: v.id("contactMessages"),
+    title: v.string(),
+    description: v.string(),
+    priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
+    dueDate: v.optional(v.number()),
+    reminder: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    return await ctx.db.insert("tasks", {
+      title: args.title,
+      description: args.description,
+      priority: args.priority,
+      status: "todo",
+      sourceType: "message",
+      sourceId: args.messageId,
+      authorId: userId ?? undefined,
+      createdAt: Date.now(),
+      dueDate: args.dueDate,
+      reminder: args.reminder,
+    });
+  },
+});
+
+export const getTasks = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("tasks")
+      .filter((q) => 
+        q.or(
+          q.eq(q.field("archivedAt"), undefined),
+          q.eq(q.field("archivedAt"), null)
+        )
+      )
+      .order("desc")
+      .collect();
+  },
+});
+
+export const getArchivedTasks = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("tasks")
+      .filter((q) => 
+        q.and(
+          q.neq(q.field("archivedAt"), undefined),
+          q.neq(q.field("archivedAt"), null)
+        )
+      )
+      .order("desc")
+      .collect();
+  },
+});
+
+export const updateTaskStatus = mutation({
+  args: { 
+    id: v.id("tasks"), 
+    status: v.union(v.literal("todo"), v.literal("in_progress"), v.literal("done")) 
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { status: args.status });
+  },
+});
+
+export const archiveTask = mutation({
+  args: { id: v.id("tasks") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { archivedAt: Date.now() });
+  },
+});
+
+export const unarchiveTask = mutation({
+  args: { id: v.id("tasks") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { archivedAt: null });
+  },
+});
+
+export const updateTask = mutation({
+  args: {
+    id: v.id("tasks"),
+    title: v.optional(v.string()),
+    description: v.optional(v.string()),
+    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    dueDate: v.optional(v.number()),
+    reminder: v.optional(v.number()),
+    status: v.optional(v.union(v.literal("todo"), v.literal("in_progress"), v.literal("done")))
+  },
+  handler: async (ctx, args) => {
+    const { id, ...updates } = args;
+    await ctx.db.patch(id, updates);
+  },
+});
+
+export const getChatbotSettings = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("chatbot_settings").first();
+  },
+});
+
+export const updateChatbotSettings = mutation({
+  args: {
+    systemPrompt: v.string(),
+    knowledgeBase: v.string(),
+    model: v.string(),
+    temperature: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.query("chatbot_settings").first();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        ...args,
+        lastUpdated: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("chatbot_settings", {
+        ...args,
+        lastUpdated: Date.now(),
+      });
+    }
+  },
+});
+
+export const getSiteContent = query({
+  args: { key: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("site_content")
+      .withIndex("by_key", (q) => q.eq("key", args.key))
+      .first();
+  },
+});
+
+export const updateSiteContent = mutation({
+  args: { key: v.string(), content: v.string() },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("site_content")
+      .withIndex("by_key", (q) => q.eq("key", args.key))
+      .first();
+    
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        content: args.content,
+        lastUpdated: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("site_content", {
+        key: args.key,
+        content: args.content,
+        lastUpdated: Date.now(),
+      });
+    }
   },
 });
 
