@@ -275,13 +275,22 @@ export default defineSchema({
         v.literal("title"),
         v.literal("subtitle"),
         v.literal("separator"),
-        v.literal("stepper")
+        v.literal("stepper"),
+        v.literal("input_group"),
+        v.literal("slider"),
+        v.literal("image"),
+        v.literal("file_upload"),
+        v.literal("flex_row"),
+        v.literal("star_rating"),
+        v.literal("happiness_rating"),
+        v.literal("date_range")
       ),
       required: v.boolean(),
       options: v.optional(v.array(v.string())),
       placeholder: v.optional(v.string()),
       regexPattern: v.optional(v.string()),
       helpText: v.optional(v.string()),
+      stepTitle: v.optional(v.string()),
       conditions: v.optional(v.array(v.object({
         fieldId: v.string(),
         operator: v.union(v.literal("eq"), v.literal("neq")),
@@ -303,10 +312,134 @@ export default defineSchema({
         apiKeyEnvName: v.optional(v.string()),
         outputFormat: v.optional(v.union(v.literal("default"), v.literal("google"), v.literal("stripe"))),
         verifyAddress: v.optional(v.boolean())
+      })),
+      // Phone Config
+      phoneConfig: v.optional(v.object({
+        format: v.optional(v.union(v.literal("pretty"), v.literal("standard"), v.literal("basic"))),
+        international: v.optional(v.boolean()),
+        showFlags: v.optional(v.boolean())
+      })),
+      // Textarea Config
+      textareaConfig: v.optional(v.object({
+        rows: v.optional(v.number()),
+        resizable: v.optional(v.boolean())
+      })),
+      // Slider Config
+      sliderConfig: v.optional(v.object({
+        min: v.optional(v.number()),
+        max: v.optional(v.number()),
+        step: v.optional(v.number())
+      })),
+      // Image Config
+      imageConfig: v.optional(v.object({
+        src: v.optional(v.string()),
+        alt: v.optional(v.string()),
+        width: v.optional(v.number()),
+        height: v.optional(v.number())
+      })),
+      // File Upload Config
+      fileConfig: v.optional(v.object({
+        allowedTypes: v.optional(v.array(v.string())),
+        maxFiles: v.optional(v.number())
+      })),
+      // Flex Row Config
+      flexConfig: v.optional(v.object({
+        justify: v.optional(v.union(v.literal("start"), v.literal("center"), v.literal("end"), v.literal("between"), v.literal("around"))),
+        align: v.optional(v.union(v.literal("start"), v.literal("center"), v.literal("end"), v.literal("stretch"))),
+        gap: v.optional(v.number())
+      })),
+      // Star Rating Config
+      starRatingConfig: v.optional(v.object({
+        maxStars: v.optional(v.number())
+      })),
+      // Date Range Config
+      dateRangeConfig: v.optional(v.object({
+        allowSameDay: v.optional(v.boolean())
       }))
+    })),
+    settings: v.optional(v.object({
+      isConsecutive: v.optional(v.boolean()),
+      completionEmail: v.optional(v.string()) // Email template to send on completion
+    })),
+    // Open Graph metadata for sharing
+    ogMetadata: v.optional(v.object({
+      title: v.optional(v.string()),
+      description: v.optional(v.string()),
+      image: v.optional(v.string()),
+      imageAlt: v.optional(v.string())
     })),
     isActive: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_slug", ["slug"]),
+  
+  form_submissions: defineTable({
+    formId: v.id("custom_forms"),
+    formName: v.string(),
+    submitterEmail: v.optional(v.string()),
+    submitterName: v.optional(v.string()),
+    data: v.any(), // The actual form data submitted
+    isRead: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_form", ["formId"])
+    .index("by_read", ["isRead"])
+    .index("by_created", ["createdAt"]),
+  
+  // Track form analytics - views, starts, completions, bounces
+  form_analytics: defineTable({
+    formId: v.id("custom_forms"),
+    eventType: v.union(
+      v.literal("view"),      // Form was viewed
+      v.literal("start"),     // User started filling form
+      v.literal("complete"),  // Form was completed
+      v.literal("bounce")     // User started but didn't complete
+    ),
+    sessionId: v.optional(v.string()), // Track unique sessions
+    userAgent: v.optional(v.string()),
+    referrer: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_form", ["formId"])
+    .index("by_event", ["eventType"])
+    .index("by_form_and_event", ["formId", "eventType"])
+    .index("by_created", ["createdAt"]),
+  
+  // SEO Metadata management for pages
+  seo_metadata: defineTable({
+    pagePath: v.string(), // e.g., "/", "/about", "/blog/[slug]", "/forms/[slug]"
+    pageTitle: v.string(), // <title> tag
+    metaDescription: v.string(), // meta description
+    keywords: v.optional(v.array(v.string())), // meta keywords
+    ogTitle: v.optional(v.string()), // Open Graph title (defaults to pageTitle)
+    ogDescription: v.optional(v.string()), // OG description (defaults to metaDescription)
+    ogImage: v.optional(v.string()), // OG image URL
+    ogImageAlt: v.optional(v.string()), // OG image alt text
+    twitterCard: v.optional(v.union(
+      v.literal("summary"),
+      v.literal("summary_large_image"),
+      v.literal("app"),
+      v.literal("player")
+    )),
+    twitterTitle: v.optional(v.string()),
+    twitterDescription: v.optional(v.string()),
+    twitterImage: v.optional(v.string()),
+    canonicalUrl: v.optional(v.string()), // Canonical URL
+    robots: v.optional(v.string()), // e.g., "index, follow" or "noindex, nofollow"
+    isActive: v.boolean(), // Enable/disable SEO for this page
+    priority: v.optional(v.number()), // For sitemap.xml (0.0 to 1.0)
+    changeFrequency: v.optional(v.union(
+      v.literal("always"),
+      v.literal("hourly"),
+      v.literal("daily"),
+      v.literal("weekly"),
+      v.literal("monthly"),
+      v.literal("yearly"),
+      v.literal("never")
+    )),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_path", ["pagePath"])
+    .index("by_active", ["isActive"]),
 });

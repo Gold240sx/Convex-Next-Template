@@ -1,9 +1,10 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useRef, useEffect, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useQuery, useMutation, useAction } from "convex/react"
 import { api } from "~/convex/_generated/api"
+import { batch } from '@tanstack/pacer'
 import { 
     ArrowLeft, 
     Plus, 
@@ -29,14 +30,26 @@ import {
     X,
     Trash2,
     Check,
-    XCircle
+    XCircle,
+    Folder,
+    Settings,
+    Save,
+    Cloud,
+    Loader2,
+    CloudUpload,
+    Image as ImageIcon,
+    FileUp,
+    SlidersHorizontal,
+    Columns,
+    Star,
+    Smile,
+    CalendarRange
 } from "lucide-react"
 import { useNativeAddressToStripeConvert, useNativeAddressToGoogleConvert } from "@/hooks/useAddressConverters"
 import { Button } from "@/components/shadcn/button"
 import { Input } from "@/components/shadcn/input"
 import { Label } from "@/components/shadcn/label"
 import { Textarea } from "@/components/shadcn/textarea"
-import { Switch } from "@/components/shadcn/switch"
 import {
     Select,
     SelectContent,
@@ -44,6 +57,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/shadcn/select"
+import { Switch } from "@/components/shadcn/switch"
+import { Slider } from "@/components/shadcn/slider"
 import {
     Dialog,
     DialogContent,
@@ -262,17 +277,107 @@ const PropertiesPanel = ({
                     </div>
                 )}
 
-                {field.type === 'regex' && (
+                {/* Regex Pattern for Text/Number Fields */}
+                {['text', 'number'].includes(field.type) && (
                     <div className="space-y-2">
-                        <Label>Regex Pattern</Label>
+                        <Label>Regex Pattern (Optional)</Label>
                         <Input 
-                            value={field.regexPattern} 
+                            value={field.regexPattern || ""} 
                             onChange={(e) => onUpdate(field.id, { regexPattern: e.target.value })}
+                            placeholder="e.g. ^[a-zA-Z0-9]+$"
                             className="font-mono text-sm"
                         />
+                        <p className="text-xs text-muted-foreground">
+                            Custom validation pattern for this field
+                        </p>
                     </div>
                 )}
 
+                {/* Phone Format Configuration */}
+                {field.type === 'phone' && (
+                    <div className="space-y-4">
+                        <Label className="uppercase text-xs font-bold text-muted-foreground">Phone Settings</Label>
+                        <div className="space-y-2">
+                            <Label>Format</Label>
+                            <Select 
+                                value={field.phoneConfig?.format || "pretty"} 
+                                onValueChange={(val) => onUpdate(field.id, { phoneConfig: { ...field.phoneConfig, format: val } })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Format" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="pretty">Pretty - (555) 555-5555</SelectItem>
+                                    <SelectItem value="standard">Standard - 555-555-5555</SelectItem>
+                                    <SelectItem value="basic">Basic - 5555555555</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex items-center justify-between border p-3 rounded-lg bg-muted/10">
+                            <div className="space-y-0.5">
+                                <Label>International</Label>
+                                <p className="text-xs text-muted-foreground">Allow international phone numbers</p>
+                            </div>
+                            <Switch 
+                                checked={field.phoneConfig?.international ?? false} 
+                                onCheckedChange={(c) => onUpdate(field.id, { phoneConfig: { ...field.phoneConfig, international: c } })}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between border p-3 rounded-lg bg-muted/10">
+                            <div className="space-y-0.5">
+                                <Label>Show Country Flags</Label>
+                                <p className="text-xs text-muted-foreground">Display flag selector for countries</p>
+                            </div>
+                            <Switch 
+                                checked={field.phoneConfig?.showFlags ?? false} 
+                                onCheckedChange={(c) => onUpdate(field.id, { phoneConfig: { ...field.phoneConfig, showFlags: c } })}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Textarea Configuration */}
+                {field.type === 'textarea' && (
+                    <div className="space-y-4">
+                        <Label className="uppercase text-xs font-bold text-muted-foreground">Long Text Settings</Label>
+                        <div className="space-y-2">
+                            <Label>Number of Rows</Label>
+                            <Input 
+                                type="number"
+                                value={field.textareaConfig?.rows ?? 4}
+                                onChange={(e) => onUpdate(field.id, { textareaConfig: { ...field.textareaConfig, rows: Number(e.target.value) } })}
+                                min="2"
+                                max="20"
+                            />
+                        </div>
+                        <div className="flex items-center justify-between border p-3 rounded-lg bg-muted/10">
+                            <div className="space-y-0.5">
+                                <Label>Vertically Resizable</Label>
+                                <p className="text-xs text-muted-foreground">Allow users to resize height</p>
+                            </div>
+                            <Switch 
+                                checked={field.textareaConfig?.resizable ?? true} 
+                                onCheckedChange={(c) => onUpdate(field.id, { textareaConfig: { ...field.textareaConfig, resizable: c } })}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Date Range Configuration */}
+                {field.type === 'date_range' && (
+                    <div className="space-y-2">
+                        <Label className="uppercase text-xs font-bold text-muted-foreground">Date Range Settings</Label>
+                        <div className="flex items-center justify-between border p-3 rounded-lg bg-muted/10">
+                            <Label>Allow Same Day</Label>
+                            <Switch 
+                                checked={field.dateRangeConfig?.allowSameDay ?? true} 
+                                onCheckedChange={(c) => onUpdate(field.id, { dateRangeConfig: { ...field.dateRangeConfig, allowSameDay: c } })}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Number/Stepper Min/Max */}
                 {['number', 'stepper'].includes(field.type) && (
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -407,6 +512,7 @@ const PropertiesPanel = ({
                     </div>
                 )}
 
+                {/* Condition Block Layout */}
                 {field.type === 'condition_block' && (
                     <div className="space-y-4">
                         <Label className="uppercase text-xs font-bold text-muted-foreground">Condition Rules</Label>
@@ -457,6 +563,220 @@ const PropertiesPanel = ({
                                 />
                             </div>
                         </div>
+                    </div>
+                )}
+                
+                {/* Slider Configuration */}
+                {field.type === 'slider' && (
+                    <div className="space-y-4">
+                        <Label className="uppercase text-xs font-bold text-muted-foreground">Slider Settings</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="space-y-2">
+                                <Label>Min</Label>
+                                <Input 
+                                    type="number"
+                                    value={field.sliderConfig?.min ?? 0}
+                                    onChange={(e) => onUpdate(field.id, { sliderConfig: { ...field.sliderConfig, min: Number(e.target.value) } })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Max</Label>
+                                <Input 
+                                    type="number"
+                                    value={field.sliderConfig?.max ?? 100}
+                                    onChange={(e) => onUpdate(field.id, { sliderConfig: { ...field.sliderConfig, max: Number(e.target.value) } })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Step</Label>
+                                <Input 
+                                    type="number"
+                                    value={field.sliderConfig?.step ?? 1}
+                                    onChange={(e) => onUpdate(field.id, { sliderConfig: { ...field.sliderConfig, step: Number(e.target.value) } })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Image Configuration */}
+                {field.type === 'image' && (
+                    <div className="space-y-4">
+                        <Label className="uppercase text-xs font-bold text-muted-foreground">Image Settings</Label>
+                        <div className="space-y-2">
+                            <Label>Image URL</Label>
+                            <Input 
+                                value={field.imageConfig?.src || ""}
+                                onChange={(e) => onUpdate(field.id, { imageConfig: { ...field.imageConfig, src: e.target.value } })}
+                                placeholder="https://example.com/image.jpg"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Alt Text</Label>
+                            <Input 
+                                value={field.imageConfig?.alt || ""}
+                                onChange={(e) => onUpdate(field.id, { imageConfig: { ...field.imageConfig, alt: e.target.value } })}
+                                placeholder="Image description"
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-2">
+                                <Label>Width (px)</Label>
+                                <Input 
+                                    type="number"
+                                    value={field.imageConfig?.width ?? ""}
+                                    onChange={(e) => onUpdate(field.id, { imageConfig: { ...field.imageConfig, width: e.target.value ? Number(e.target.value) : undefined } })}
+                                    placeholder="Auto"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Height (px)</Label>
+                                <Input 
+                                    type="number"
+                                    value={field.imageConfig?.height ?? ""}
+                                    onChange={(e) => onUpdate(field.id, { imageConfig: { ...field.imageConfig, height: e.target.value ? Number(e.target.value) : undefined } })}
+                                    placeholder="Auto"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* File Upload Configuration */}
+                {field.type === 'file_upload' && (
+                    <div className="space-y-4">
+                        <Label className="uppercase text-xs font-bold text-muted-foreground">File Upload Settings</Label>
+                        <div className="space-y-2">
+                            <Label>Max Files</Label>
+                            <Input 
+                                type="number"
+                                value={field.fileConfig?.maxFiles ?? 1}
+                                onChange={(e) => onUpdate(field.id, { fileConfig: { ...field.fileConfig, maxFiles: Number(e.target.value) } })}
+                                min="1"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Allowed File Types</Label>
+                            <div className="space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['Images', 'Documents', 'Videos', 'Audio'].map((category) => {
+                                        const typeMap: Record<string, string[]> = {
+                                            'Images': ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+                                            'Documents': ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+                                            'Videos': ['video/mp4', 'video/webm', 'video/quicktime'],
+                                            'Audio': ['audio/mpeg', 'audio/wav', 'audio/ogg']
+                                        };
+                                        const types = typeMap[category];
+                                        const isChecked = types.some(t => field.fileConfig?.allowedTypes?.includes(t));
+                                        
+                                        return (
+                                            <div key={category} className="flex items-center space-x-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`file-${category}`}
+                                                    checked={isChecked}
+                                                    onChange={(e) => {
+                                                        const currentTypes = field.fileConfig?.allowedTypes || [];
+                                                        let newTypes: string[];
+                                                        if (e.target.checked) {
+                                                            newTypes = [...currentTypes, ...types.filter(t => !currentTypes.includes(t))];
+                                                        } else {
+                                                            newTypes = currentTypes.filter(t => !types.includes(t));
+                                                        }
+                                                        onUpdate(field.id, { fileConfig: { ...field.fileConfig, allowedTypes: newTypes } });
+                                                    }}
+                                                    className="rounded border-gray-300"
+                                                />
+                                                <label htmlFor={`file-${category}`} className="text-sm">{category}</label>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Flex Row Configuration */}
+                {field.type === 'flex_row' && (
+                    <div className="space-y-4">
+                        <Label className="uppercase text-xs font-bold text-muted-foreground">Flex Row Settings</Label>
+                        <div className="space-y-2">
+                            <Label>Justify Content</Label>
+                            <Select 
+                                value={field.flexConfig?.justify || "start"} 
+                                onValueChange={(val) => onUpdate(field.id, { flexConfig: { ...field.flexConfig, justify: val } })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Justify" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="start">Start</SelectItem>
+                                    <SelectItem value="center">Center</SelectItem>
+                                    <SelectItem value="end">End</SelectItem>
+                                    <SelectItem value="between">Space Between</SelectItem>
+                                    <SelectItem value="around">Space Around</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Align Items</Label>
+                            <Select 
+                                value={field.flexConfig?.align || "center"} 
+                                onValueChange={(val) => onUpdate(field.id, { flexConfig: { ...field.flexConfig, align: val } })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Align" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="start">Start</SelectItem>
+                                    <SelectItem value="center">Center</SelectItem>
+                                    <SelectItem value="end">End</SelectItem>
+                                    <SelectItem value="stretch">Stretch</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Gap (px)</Label>
+                            <Input 
+                                type="number"
+                                value={field.flexConfig?.gap ?? 16}
+                                onChange={(e) => onUpdate(field.id, { flexConfig: { ...field.flexConfig, gap: Number(e.target.value) } })}
+                            />
+                        </div>
+                    </div>
+                )}
+                
+                {/* Star Rating Configuration */}
+                {field.type === 'star_rating' && (
+                    <div className="space-y-2">
+                        <Label className="uppercase text-xs font-bold text-muted-foreground">Star Rating Settings</Label>
+                        <div className="space-y-2">
+                            <Label>Max Stars</Label>
+                            <Input 
+                                type="number"
+                                value={field.starRatingConfig?.maxStars ?? 5}
+                                onChange={(e) => onUpdate(field.id, { starRatingConfig: { ...field.starRatingConfig, maxStars: Number(e.target.value) } })}
+                                min="1"
+                                max="10"
+                            />
+                        </div>
+                    </div>
+                )}
+                
+                {/* Step Configuration for Consecutive Forms */}
+                {(field.type === 'input_group' || field.type === 'condition_block' || !['separator', 'title', 'subtitle'].includes(field.type)) && (
+                    <div className="space-y-2 pt-4 border-t border-border">
+                        <Label className="flex items-center justify-between">
+                            <span>Step Title</span>
+                            <span className="text-[10px] text-muted-foreground font-normal bg-muted px-1.5 py-0.5 rounded">Consecutive Mode</span>
+                        </Label>
+                        <Input 
+                            value={field.stepTitle || ""} 
+                            onChange={(e) => onUpdate(field.id, { stepTitle: e.target.value })}
+                            placeholder="e.g. Personal Info"
+                        />
+                        <p className="text-[10px] text-muted-foreground">Title shown in the multi-step indicator if this element is a step.</p>
                     </div>
                 )}
             </div>
@@ -595,7 +915,7 @@ const FieldRenderer = ({
                          onSelectField(field.id);
                     }}
                     className={cn(
-                        "group relative flex flex-col min-h-[120px] h-fit w-full rounded-md ring-1 ring-inset px-4 py-4 transition-all hover:cursor-pointer mb-1",
+                        "group relative flex flex-col min-h-[120px] h-fit w-full rounded-2xl ring-1 ring-inset px-4 py-4 transition-all hover:cursor-pointer mb-1",
                         // Default Style
                          "bg-gray-900/80 ring-border text-gray-100",
                          // Selected Style
@@ -635,8 +955,95 @@ const FieldRenderer = ({
                         </Button>
                     </div>
 
-                    {/* Condition Block Layout */}
-                    {field.type === 'condition_block' ? (
+                    {/* Input Group Layout */}
+                    {field.type === 'input_group' ? (
+                        <div className="space-y-4 border rounded-lg p-4 bg-muted/5 relative">
+                            {/* Group Header */}
+                            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                                 <span className="p-1 rounded bg-indigo-500/10 text-indigo-600">
+                                    <Folder className="w-4 h-4" />
+                                </span>
+                                <span className="font-bold text-sm uppercase tracking-wide text-muted-foreground">
+                                    {field.label || "Input Group"}
+                                </span>
+                                {field.stepTitle && (
+                                     <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground border">
+                                        Step: {field.stepTitle}
+                                     </span>
+                                )}
+                            </div>
+
+                            {/* Recursive Children Render */}
+                            <div 
+                                className="pl-4 min-h-[60px]"
+                                onDragOver={(e) => handleDragOver(e, field.id, true)}
+                                onDrop={(e) => handleDropInternal(e, field.id)}
+                            >
+                                <FieldRenderer 
+                                    fields={field.children || []} 
+                                    allFields={allFields}
+                                    onUpdate={onUpdate} 
+                                    onRemove={onRemove} 
+                                    onDrop={onDrop} 
+                                    onDragStart={onDragStart}
+                                    selectedFieldId={selectedFieldId}
+                                    onSelectField={onSelectField}
+                                    isRoot={false}
+                                />
+                            </div>
+                        </div>
+                    ) : field.type === 'flex_row' ? (
+                        <div className="space-y-4 border rounded-lg p-4 bg-gradient-to-r from-purple-500/5 to-pink-500/5 relative">
+                            {/* Flex Row Header */}
+                            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                                 <span className="p-1 rounded bg-purple-500/10 text-purple-600">
+                                    <Columns className="w-4 h-4" />
+                                </span>
+                                <span className="font-bold text-sm uppercase tracking-wide text-muted-foreground">
+                                    {field.label || "Flex Row"}
+                                </span>
+                                <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground border">
+                                    {field.flexConfig?.justify || 'start'} / {field.flexConfig?.align || 'center'}
+                                </span>
+                            </div>
+
+                            {/* Horizontal Children Render */}
+                            <div 
+                                className={`flex min-h-[80px] border-2 border-dashed border-purple-500/20 rounded-lg p-2`}
+                                style={{
+                                    justifyContent: field.flexConfig?.justify === 'between' ? 'space-between' : 
+                                                   field.flexConfig?.justify === 'around' ? 'space-around' :
+                                                   field.flexConfig?.justify || 'flex-start',
+                                    alignItems: field.flexConfig?.align || 'center',
+                                    gap: `${field.flexConfig?.gap ?? 16}px`
+                                }}
+                                onDragOver={(e) => handleDragOver(e, field.id, true)}
+                                onDrop={(e) => handleDropInternal(e, field.id)}
+                            >
+                                {field.children && field.children.length > 0 ? (
+                                    field.children.map((child: any) => (
+                                        <div key={child.id} className="flex-shrink-0">
+                                            <FieldRenderer 
+                                                fields={[child]} 
+                                                allFields={allFields}
+                                                onUpdate={onUpdate} 
+                                                onRemove={onRemove} 
+                                                onDrop={onDrop} 
+                                                onDragStart={onDragStart}
+                                                selectedFieldId={selectedFieldId}
+                                                onSelectField={onSelectField}
+                                                isRoot={false}
+                                            />
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex-1 flex items-center justify-center text-muted-foreground text-xs italic">
+                                        Drop elements here to arrange horizontally
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : field.type === 'condition_block' ? (
                         <div className="space-y-4 border-l-4 border-l-teal-500 pl-4 py-2">
                              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
                                 <span className="p-1 rounded bg-teal-500/10 text-teal-600">
@@ -712,7 +1119,11 @@ const FieldRenderer = ({
                                     </div>
                                     <div className="space-y-1">
                                         <Label className="text-xs">State</Label>
-                                        <Input disabled placeholder="NY" className="bg-muted/50" />
+                                        <Select disabled>
+                                            <SelectTrigger className="bg-muted/50">
+                                                <SelectValue placeholder="NY" />
+                                            </SelectTrigger>
+                                        </Select>
                                     </div>
                                     <div className="col-span-2 space-y-1">
                                         <Label className="text-xs">Zip Code</Label>
@@ -735,6 +1146,111 @@ const FieldRenderer = ({
                                 </div>
                             )}
 
+                            {/* Slider Preview */}
+                            {field.type === 'slider' && (
+                                <div className="space-y-2 select-none">
+                                    <div className="flex justify-between text-xs text-muted-foreground">
+                                        <span>{field.sliderConfig?.min ?? 0}</span>
+                                        <span>{field.sliderConfig?.max ?? 100}</span>
+                                    </div>
+                                    <Slider 
+                                        disabled
+                                        defaultValue={[(field.sliderConfig?.min ?? 0) + ((field.sliderConfig?.max ?? 100) - (field.sliderConfig?.min ?? 0)) / 2]}
+                                        min={field.sliderConfig?.min ?? 0}
+                                        max={field.sliderConfig?.max ?? 100}
+                                        step={field.sliderConfig?.step ?? 1}
+                                        className="opacity-60"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Image Preview */}
+                            {field.type === 'image' && (
+                                <div className="space-y-2">
+                                    {field.imageConfig?.src ? (
+                                        <div className="relative border border-border rounded-lg overflow-hidden bg-muted/20">
+                                            <img 
+                                                src={field.imageConfig.src} 
+                                                alt={field.imageConfig.alt || "Preview"}
+                                                style={{
+                                                    width: field.imageConfig.width ? `${field.imageConfig.width}px` : '100%',
+                                                    height: field.imageConfig.height ? `${field.imageConfig.height}px` : 'auto',
+                                                    maxWidth: '100%'
+                                                }}
+                                                className="object-contain"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-center h-32 border-2 border-dashed border-border rounded-lg bg-muted/10">
+                                            <div className="text-center text-muted-foreground">
+                                                <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                                <p className="text-xs">No image URL set</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* File Upload Preview */}
+                            {field.type === 'file_upload' && (
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-center h-24 border-2 border-dashed border-border rounded-lg bg-muted/10 cursor-not-allowed opacity-60">
+                                        <div className="text-center text-muted-foreground">
+                                            <FileUp className="w-6 h-6 mx-auto mb-1" />
+                                            <p className="text-xs">Click to upload</p>
+                                            <p className="text-[10px] mt-1">Max {field.fileConfig?.maxFiles ?? 1} file(s)</p>
+                                        </div>
+                                    </div>
+                                    {field.fileConfig?.allowedTypes && field.fileConfig.allowedTypes.length > 0 && (
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Allowed: {field.fileConfig.allowedTypes.map(t => t.split('/')[0]).filter((v, i, a) => a.indexOf(v) === i).join(', ')}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Star Rating Preview */}
+                            {field.type === 'star_rating' && (
+                                <div className="flex items-center gap-1 select-none">
+                                    {Array.from({ length: field.starRatingConfig?.maxStars || 5 }).map((_, i) => (
+                                        <Star 
+                                            key={i}
+                                            className={`w-6 h-6 ${i < 3 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Happiness Rating Preview */}
+                            {field.type === 'happiness_rating' && (
+                                <div className="flex items-center gap-2 select-none">
+                                    {['😞', '😕', '😐', '🙂', '😄'].map((emoji, i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            disabled
+                                            className={`text-3xl transition-all hover:scale-110 ${i === 2 ? 'opacity-100 scale-110' : 'opacity-40'}`}
+                                        >
+                                            {emoji}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Date Range Preview */}
+                            {field.type === 'date_range' && (
+                                <div className="grid grid-cols-2 gap-2 select-none">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Start Date</Label>
+                                        <Input disabled placeholder="MM/DD/YYYY" className="bg-muted/50" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">End Date</Label>
+                                        <Input disabled placeholder="MM/DD/YYYY" className="bg-muted/50" />
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Standard Types Body */}
                             {['select', 'radio', 'checkbox'].includes(field.type) && (
                                 <div className="space-y-2">
@@ -745,18 +1261,17 @@ const FieldRenderer = ({
                                     </div>
                                 </div>
                             )}
-
-                            {field.type === 'regex' && (
-                                <div className="flex items-center gap-2 text-xs font-mono bg-muted/20 p-2 rounded">
-                                    <Code2 className="w-3 h-3 text-muted-foreground" />
-                                    <span>{field.regexPattern || "No pattern defined"}</span>
-                                </div>
-                            )}
                             
                             {/* Placeholder Preview (if applicable) */}
                              { !['title', 'subtitle', 'separator', 'address', 'stepper'].includes(field.type) && (
-                                <div className="pt-1">
+                                <div className="space-y-1">
                                     <Input disabled placeholder={field.placeholder || "Answer..."} className="bg-muted/10 border-dashed" />
+                                    {field.regexPattern && (
+                                        <div className="flex items-center gap-2 text-xs font-mono bg-muted/20 p-2 rounded">
+                                            <Code2 className="w-3 h-3 text-muted-foreground" />
+                                            <span className="text-muted-foreground">Pattern: {field.regexPattern}</span>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -776,7 +1291,6 @@ const getIconForType = (type: string) => {
         case "number": return <Hash className="w-4 h-4" />
         case "select": return <List className="w-4 h-4" />
         case "phone": return <Phone className="w-4 h-4" />
-        case "regex": return <Code2 className="w-4 h-4" />
         case "boolean": return <ToggleLeft className="w-4 h-4" />
         case "date": return <Calendar className="w-4 h-4" />
         case "radio": return <CircleDot className="w-4 h-4" />
@@ -787,6 +1301,14 @@ const getIconForType = (type: string) => {
         case "subtitle": return <MessageSquare className="w-4 h-4" />
         case "address": return <MapPin className="w-4 h-4" />
         case "stepper": return <ChevronsUpDown className="w-4 h-4" />
+        case "input_group": return <Folder className="w-4 h-4" />
+        case "slider": return <SlidersHorizontal className="w-4 h-4" />
+        case "image": return <ImageIcon className="w-4 h-4" />
+        case "file_upload": return <FileUp className="w-4 h-4" />
+        case "flex_row": return <Columns className="w-4 h-4" />
+        case "star_rating": return <Star className="w-4 h-4" />
+        case "happiness_rating": return <Smile className="w-4 h-4" />
+        case "date_range": return <CalendarRange className="w-4 h-4" />
         default: return <Type className="w-4 h-4" />
     }
 }
@@ -799,10 +1321,52 @@ export default function FormBuilderPage() {
     const form = useQuery(api.myFunctions.getCustomFormById, { id: formId })
     const updateForm = useMutation(api.myFunctions.updateCustomForm)
 
+    // Local State & Auto-Save Batching
+    const [localFields, setLocalFields] = useState<any[] | null>(null)
+    const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
+    const fieldsRef = useRef<any[]>([])
+
+    // Sync Ref for batcher
+    useEffect(() => {
+        if (localFields) fieldsRef.current = localFields;
+    }, [localFields]);
+
+    // Initialize local state from DB
+    useEffect(() => {
+        if (form && form.fields && localFields === null) {
+            setLocalFields(form.fields);
+            fieldsRef.current = form.fields;
+        }
+    }, [form, localFields]); // Added localFields to dependency array to prevent re-initialization if localFields is set to null elsewhere
+
+    // Batch Save Logic
+    const processSave = batch(
+        async (items: number[]) => {
+            setSaveStatus('saving');
+            try {
+                await updateForm({ id: formId, fields: fieldsRef.current });
+                setSaveStatus('saved');
+            } catch (err) {
+                console.error("Auto-save failed:", err);
+                setSaveStatus('unsaved');
+            }
+        },
+        { 
+            maxSize: 3, 
+            wait: 2000 
+        }
+    );
+
+    const queueUpdate = (newFields: any[]) => {
+        setLocalFields(newFields);
+        setSaveStatus('unsaved');
+        processSave(1);
+    };
+
     const [draggedType, setDraggedType] = useState<string | null>(null)
     const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null)
 
-    if (!form) {
+    if (!form || localFields === null) { // Wait for form and localFields to be initialized
         return (
              <div className="flex flex-col h-[60vh] items-center justify-center space-y-4">
                 <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin" />
@@ -810,115 +1374,103 @@ export default function FormBuilderPage() {
         )
     }
 
+    // Use local fields for rendering
+    const activeFields = localFields || [];
+
+    const handleUpdateField = (id: string, updates: any) => {
+        if (!localFields) return;
+        const newFields = updateFieldInTree(localFields, id, updates);
+        queueUpdate(newFields);
+    }
+
+    const handleRemoveField = (id: string) => {
+        if (!localFields) return;
+        const newFields = removeFieldFromTree(localFields, id);
+        // If removing selected field, deselect it
+        if (selectedFieldId === id) setSelectedFieldId(null);
+        queueUpdate(newFields);
+    }
+    
+    // Manual Force Save
+    const handleForceSave = async () => {
+        if (!localFields) return;
+        setSaveStatus('saving');
+        await updateForm({ id: formId, fields: localFields });
+        setSaveStatus('saved');
+    }
+
     const handleDragStart = (e: React.DragEvent, id: string, type: 'field' | 'new') => {
         if (type === 'new') {
              e.dataTransfer.setData("type", id); // id is the input type string here
-             e.dataTransfer.setData("dragMode", "new");
-             setDraggedType(id);
+             setDraggedType('new');
         } else {
              e.dataTransfer.setData("fieldId", id);
-             e.dataTransfer.setData("dragMode", "move");
-             setDraggedType('existing-field');
+             setDraggedType('field');
         }
-    }
+    };
 
     const handleDrop = async (e: React.DragEvent, targetId?: string, position?: 'before' | 'after' | 'inside') => {
         e.preventDefault();
-        e.stopPropagation();
-        
-        const dragMode = e.dataTransfer.getData("dragMode");
-        console.log("DROP:", { dragMode, targetId, position });
+        setDraggedType(null);
 
-        let updatedFields = [...(form.fields || [])];
+        const type = e.dataTransfer.getData("type");
+        const draggedFieldId = e.dataTransfer.getData("fieldId");
 
-        if (dragMode === 'move') {
-            const fieldId = e.dataTransfer.getData("fieldId");
-            console.log("Move Field:", fieldId);
-            if (!fieldId) return;
-            if (fieldId === targetId) return; // Dropped on self
+        if (!localFields) return;
 
-            // 1. Find and Remove the field from its old location
-            const fieldToMove = allFlatFields.find(f => f.id === fieldId);
-            if (!fieldToMove) {
-                console.error("Field not found:", fieldId);
-                return;
-            }
+        let newFields = [...localFields];
 
-             updatedFields = removeFieldFromTree(updatedFields, fieldId);
+        if (type) {
+             // Adding New Field
+             // ... (Logic for new field creation) ...
+             const newFieldId = crypto.randomUUID();
+             const newFieldLabel = inputTypes.find(t => t.type === type)?.label || "New Field";
+             
+             const newField: any = {
+                 id: newFieldId,
+                 type,
+                 label: newFieldLabel,
+                 required: false,
+                 children: (type === 'condition_block' || type === 'input_group' || type === 'flex_row') ? [] : undefined
+             };
+
+             if (type === 'select' || type === 'radio' || type === 'checkbox') {
+                 newField.options = ["Option 1", "Option 2"];
+             }
+
+             if (targetId) {
+                  // Insert relative to target
+                  newFields = insertFieldInTree(newFields, newField, targetId, position || 'after');
+             } else {
+                  // Append to root
+                  newFields.push(newField);
+             }
+             
+             queueUpdate(newFields);
+             // Select the new field immediately
+             setSelectedFieldId(newFieldId);
+        } else if (draggedFieldId) {
+             // Reordering Existing Field
+             if (draggedFieldId === targetId) return; // Dropped on self
+
+             // 1. Remove from old location
+             const fieldToMove = allFlatFields.find(f => f.id === draggedFieldId);
+             if (!fieldToMove) return;
+
+             // Remove first
+             newFields = removeFieldFromTree(newFields, draggedFieldId);
 
              // 2. Insert at new location
-             updatedFields = insertFieldInTree(updatedFields, fieldToMove, targetId, position);
+             if (targetId) {
+                  newFields = insertFieldInTree(newFields, fieldToMove, targetId, position || 'after');
+             } else {
+                  // Dropped on root container
+                  newFields.push(fieldToMove);
+             }
 
-        } else {
-             // NEW FIELD
-            const type = e.dataTransfer.getData("type");
-            setDraggedType(null);
-            if (!type) return;
-
-            // ... (rest of new field logic)
-
-            let defaultOptions: string[] | undefined = undefined;
-            if (['select', 'radio', 'checkbox'].includes(type)) {
-                defaultOptions = ["Option 1", "Option 2", "Option 3"];
-            }
-
-            const newField = {
-                id: Math.random().toString(36).substr(2, 9),
-                label: type === 'condition_block' ? 'Condition Logic' : 
-                       type === 'separator' ? 'Horizontal Rule' :
-                       type === 'title' ? 'Form Title' :
-                       type === 'subtitle' ? 'Subtitle' :
-                       type === 'address' ? 'Address' :
-                       type === 'stepper' ? 'Quantity' :
-                       `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
-                type: type,
-                required: false,
-                placeholder: "",
-                options: defaultOptions,
-                regexPattern: type === 'regex' ? "^[a-zA-Z0-9]+$" : undefined,
-                helpText: "",
-                conditionRule: type === 'condition_block' ? { fieldId: "", operator: "eq", value: "" } : undefined,
-                children: type === 'condition_block' ? [] : undefined 
-            };
-
-            updatedFields = insertFieldInTree(updatedFields, newField, targetId, position);
+             queueUpdate(newFields);
         }
-
-        try {
-            await updateForm({
-                id: form._id,
-                fields: updatedFields
-            })
-            if (dragMode === 'new') toast.success("Field added")
-        } catch (error) {
-            toast.error("Failed to update form")
-        }
-    }
-
-    const handleRemoveField = async (fieldId: string) => {
-        const updatedFields = removeFieldFromTree(form.fields || [], fieldId);
-        try {
-            await updateForm({
-                id: form._id,
-                fields: updatedFields
-            })
-            toast.success("Field removed")
-        } catch (error) {
-            toast.error("Failed to remove field")
-        }
-    }
-
-    const handleUpdateField = async (fieldId: string, updates: any) => {
-        const updatedFields = updateFieldInTree(form.fields || [], fieldId, updates);
-        try {
-            await updateForm({
-                id: form._id,
-                fields: updatedFields
-            })
-        } catch (error) {
-            toast.error("Failed to update field")
-        }
-    }
+    };
 
     const inputTypes = [
         { type: "text", label: "Short Text", icon: Type },
@@ -930,10 +1482,17 @@ export default function FormBuilderPage() {
         { type: "radio", label: "Radio Group", icon: CircleDot },
         { type: "checkbox", label: "Checkbox Group", icon: CheckSquare },
         { type: "date", label: "Date Picker", icon: Calendar },
+        { type: "date_range", label: "Date Range", icon: CalendarRange },
         { type: "boolean", label: "Yes/No Toggle", icon: ToggleLeft },
-        { type: "regex", label: "Custom Regex", icon: Code2 },
+        { type: "slider", label: "Range Slider", icon: SlidersHorizontal },
+        { type: "star_rating", label: "Star Rating", icon: Star },
+        { type: "happiness_rating", label: "Happiness Rating", icon: Smile },
         { type: "condition_block", label: "Condition Block", icon: GitMerge },
+        { label: "Group / Step", type: "input_group", icon: Folder },
+        { type: "flex_row", label: "Flex Row", icon: Columns },
         { type: "address", label: "Address Group", icon: MapPin },
+        { type: "image", label: "Image", icon: ImageIcon },
+        { type: "file_upload", label: "File Upload", icon: FileUp },
         { type: "title", label: "Form Title", icon: Heading },
         { type: "subtitle", label: "Subtitle", icon: MessageSquare },
         { type: "separator", label: "Horizontal Rule", icon: Minus },
@@ -964,6 +1523,86 @@ export default function FormBuilderPage() {
                 <div>
                     <h1 className="text-3xl font-black uppercase italic tracking-tighter text-foreground">{form.name}</h1>
                     <p className="text-muted-foreground">{form.description}</p>
+                </div>
+
+                <div className="flex items-center gap-2 ml-auto">
+                    {saveStatus === 'saving' && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full animate-pulse transition-all">
+                             <Loader2 className="w-3 h-3 animate-spin"/>
+                             <span>Saving...</span>
+                        </div>
+                    )}
+                    {saveStatus === 'unsaved' && (
+                        <Button 
+                            variant="outline" size="sm" 
+                            onClick={handleForceSave}
+                            className="bg-yellow-500/10 border-yellow-500/20 text-yellow-600 hover:bg-yellow-500/20 gap-2 h-8"
+                        >
+                            <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                            <span className="text-xs">Unsaved</span>
+                            <CloudUpload className="w-3 h-3 ml-1" />
+                        </Button>
+                    )}
+                    {saveStatus === 'saved' && (
+                         <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 transition-all">
+                             <Cloud className="w-3 h-3"/>
+                             <span>Saved</span>
+                        </div>
+                    )}
+                    
+                    {/* Form Settings Button */}
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="default" className="gap-2">
+                                <Settings className="w-5 h-5" />
+                                <span>Form Settings</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80" align="end">
+                            <div className="space-y-4">
+                                <div>
+                                    <h4 className="font-semibold mb-1">Form Settings</h4>
+                                    <p className="text-xs text-muted-foreground">Configure form-level options</p>
+                                </div>
+                                <Separator />
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <Label>Consecutive Mode</Label>
+                                        <p className="text-xs text-muted-foreground">Show one step at a time</p>
+                                    </div>
+                                    <Switch 
+                                        checked={form.settings?.isConsecutive ?? false} 
+                                        onCheckedChange={(c) => updateForm({ id: formId, settings: { ...form.settings, isConsecutive: c } })}
+                                    />
+                                </div>
+                                <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                                    When enabled, Groups, Condition Blocks, and lone inputs act as steps in a multi-step form.
+                                </p>
+                                <Separator />
+                                <div className="space-y-2">
+                                    <Label>Completion Email (Optional)</Label>
+                                    <Select 
+                                        value={form.settings?.completionEmail || "none"} 
+                                        onValueChange={(val) => updateForm({ id: formId, settings: { ...form.settings, completionEmail: val === "none" ? undefined : val } })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="No email" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">No Email</SelectItem>
+                                            <SelectItem value="gen-inquiry">General Inquiry Confirmation</SelectItem>
+                                            <SelectItem value="chat-message">Chat Message Confirmation</SelectItem>
+                                            <SelectItem value="DGP-subscriber-welcome-email">Welcome Email</SelectItem>
+                                            <SelectItem value="basic-email-template">Basic Template</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">
+                                        Email template to send to user upon form completion
+                                    </p>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 </div>
             </div>
 
@@ -1011,7 +1650,9 @@ export default function FormBuilderPage() {
                          />
                     ) : (
                         <div className="bg-card border border-border rounded-xl p-6 shadow-sm h-full overflow-y-auto">
-                            <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground mb-4">Input Elements</h3>
+                            <div className="mb-4">
+                                <h3 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">Input Elements</h3>
+                            </div>
                             <Separator className="my-4" />
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 place-items-center">
                                 {inputTypes.map((item) => (

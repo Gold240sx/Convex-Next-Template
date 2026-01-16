@@ -12,9 +12,12 @@ import type * as auth from "../auth.js";
 import type * as certificates from "../certificates.js";
 import type * as chatbot from "../chatbot.js";
 import type * as chatbotData_websiteSourceMap from "../chatbotData/websiteSourceMap.js";
+import type * as formAnalytics from "../formAnalytics.js";
+import type * as formSubmissions from "../formSubmissions.js";
 import type * as http from "../http.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as rateLimiter from "../rateLimiter.js";
+import type * as seoMetadata from "../seoMetadata.js";
 import type * as technologies from "../technologies.js";
 import type * as variants from "../variants.js";
 
@@ -29,9 +32,12 @@ declare const fullApi: ApiFromModules<{
   certificates: typeof certificates;
   chatbot: typeof chatbot;
   "chatbotData/websiteSourceMap": typeof chatbotData_websiteSourceMap;
+  formAnalytics: typeof formAnalytics;
+  formSubmissions: typeof formSubmissions;
   http: typeof http;
   myFunctions: typeof myFunctions;
   rateLimiter: typeof rateLimiter;
+  seoMetadata: typeof seoMetadata;
   technologies: typeof technologies;
   variants: typeof variants;
 }>;

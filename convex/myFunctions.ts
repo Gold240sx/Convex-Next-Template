@@ -412,13 +412,22 @@ export const createCustomForm = mutation({
         v.literal("title"),
         v.literal("subtitle"),
         v.literal("separator"),
-        v.literal("stepper")
+        v.literal("stepper"),
+        v.literal("input_group"),
+        v.literal("slider"),
+        v.literal("image"),
+        v.literal("file_upload"),
+        v.literal("flex_row"),
+        v.literal("star_rating"),
+        v.literal("happiness_rating"),
+        v.literal("date_range")
       ),
       required: v.boolean(),
       options: v.optional(v.array(v.string())),
       placeholder: v.optional(v.string()),
       regexPattern: v.optional(v.string()),
       helpText: v.optional(v.string()),
+      stepTitle: v.optional(v.string()),
       conditions: v.optional(v.array(v.object({
         fieldId: v.string(),
         operator: v.union(v.literal("eq"), v.literal("neq")),
@@ -439,9 +448,48 @@ export const createCustomForm = mutation({
         apiKeyEnvName: v.optional(v.string()),
         outputFormat: v.optional(v.union(v.literal("default"), v.literal("google"), v.literal("stripe"))),
         verifyAddress: v.optional(v.boolean())
+      })),
+      phoneConfig: v.optional(v.object({
+        format: v.optional(v.union(v.literal("pretty"), v.literal("standard"), v.literal("basic"))),
+        international: v.optional(v.boolean()),
+        showFlags: v.optional(v.boolean())
+      })),
+      textareaConfig: v.optional(v.object({
+        rows: v.optional(v.number()),
+        resizable: v.optional(v.boolean())
+      })),
+      sliderConfig: v.optional(v.object({
+        min: v.optional(v.number()),
+        max: v.optional(v.number()),
+        step: v.optional(v.number())
+      })),
+      imageConfig: v.optional(v.object({
+        src: v.optional(v.string()),
+        alt: v.optional(v.string()),
+        width: v.optional(v.number()),
+        height: v.optional(v.number())
+      })),
+      fileConfig: v.optional(v.object({
+        allowedTypes: v.optional(v.array(v.string())),
+        maxFiles: v.optional(v.number())
+      })),
+      flexConfig: v.optional(v.object({
+        justify: v.optional(v.union(v.literal("start"), v.literal("center"), v.literal("end"), v.literal("between"), v.literal("around"))),
+        align: v.optional(v.union(v.literal("start"), v.literal("center"), v.literal("end"), v.literal("stretch"))),
+        gap: v.optional(v.number())
+      })),
+      starRatingConfig: v.optional(v.object({
+        maxStars: v.optional(v.number())
+      })),
+      dateRangeConfig: v.optional(v.object({
+        allowSameDay: v.optional(v.boolean())
       }))
     })),
     isActive: v.boolean(),
+    settings: v.optional(v.object({
+      isConsecutive: v.optional(v.boolean()),
+      completionEmail: v.optional(v.string())
+    }))
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -487,13 +535,38 @@ export const updateCustomForm = mutation({
         v.literal("title"),
         v.literal("subtitle"),
         v.literal("separator"),
-        v.literal("stepper")
+        v.literal("text"),
+        v.literal("email"),
+        v.literal("textarea"),
+        v.literal("select"),
+        v.literal("number"),
+        v.literal("phone"),
+        v.literal("regex"),
+        v.literal("boolean"),
+        v.literal("date"),
+        v.literal("radio"),
+        v.literal("checkbox"),
+        v.literal("condition_block"),
+        v.literal("address"),
+        v.literal("title"),
+        v.literal("subtitle"),
+        v.literal("separator"),
+        v.literal("stepper"),
+        v.literal("input_group"),
+        v.literal("slider"),
+        v.literal("image"),
+        v.literal("file_upload"),
+        v.literal("flex_row"),
+        v.literal("star_rating"),
+        v.literal("happiness_rating"),
+        v.literal("date_range")
       ),
       required: v.boolean(),
       options: v.optional(v.array(v.string())),
       placeholder: v.optional(v.string()),
       regexPattern: v.optional(v.string()),
       helpText: v.optional(v.string()),
+      stepTitle: v.optional(v.string()),
       conditions: v.optional(v.array(v.object({
         fieldId: v.string(),
         operator: v.union(v.literal("eq"), v.literal("neq")),
@@ -514,9 +587,48 @@ export const updateCustomForm = mutation({
         apiKeyEnvName: v.optional(v.string()),
         outputFormat: v.optional(v.union(v.literal("default"), v.literal("google"), v.literal("stripe"))),
         verifyAddress: v.optional(v.boolean())
+      })),
+      phoneConfig: v.optional(v.object({
+        format: v.optional(v.union(v.literal("pretty"), v.literal("standard"), v.literal("basic"))),
+        international: v.optional(v.boolean()),
+        showFlags: v.optional(v.boolean())
+      })),
+      textareaConfig: v.optional(v.object({
+        rows: v.optional(v.number()),
+        resizable: v.optional(v.boolean())
+      })),
+      sliderConfig: v.optional(v.object({
+        min: v.optional(v.number()),
+        max: v.optional(v.number()),
+        step: v.optional(v.number())
+      })),
+      imageConfig: v.optional(v.object({
+        src: v.optional(v.string()),
+        alt: v.optional(v.string()),
+        width: v.optional(v.number()),
+        height: v.optional(v.number())
+      })),
+      fileConfig: v.optional(v.object({
+        allowedTypes: v.optional(v.array(v.string())),
+        maxFiles: v.optional(v.number())
+      })),
+      flexConfig: v.optional(v.object({
+        justify: v.optional(v.union(v.literal("start"), v.literal("center"), v.literal("end"), v.literal("between"), v.literal("around"))),
+        align: v.optional(v.union(v.literal("start"), v.literal("center"), v.literal("end"), v.literal("stretch"))),
+        gap: v.optional(v.number())
+      })),
+      starRatingConfig: v.optional(v.object({
+        maxStars: v.optional(v.number())
+      })),
+      dateRangeConfig: v.optional(v.object({
+        allowSameDay: v.optional(v.boolean())
       }))
     }))),
     isActive: v.optional(v.boolean()),
+    settings: v.optional(v.object({
+      isConsecutive: v.optional(v.boolean()),
+      completionEmail: v.optional(v.string())
+    }))
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;

@@ -79,6 +79,7 @@ import {
   Medal,
   TicketX,
   Palette,
+  Globe,
 } from "lucide-react";
 
 export const AdminGroups: SectionGroup[] = [
@@ -324,6 +325,16 @@ export const AdminGroups: SectionGroup[] = [
         iconBgColor:
           "bg-orange-100 dark:bg-orange-900 hover:bg-orange-200 dark:hover:bg-orange-800 group-hover/section:bg-orange-200 dark:group-hover/section:bg-orange-800",
         link: "/admin/pages/themes",
+      },
+      // SEO
+      {
+        id: "seo",
+        title: "SEO",
+        icon: Globe,
+        iconColor: "text-green-600 dark:text-green-400",
+        iconBgColor:
+          "bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 group-hover/section:bg-green-200 dark:group-hover/section:bg-green-800",
+        link: "/admin/seo",
       },
       // Projects
       {
