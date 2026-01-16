@@ -250,4 +250,63 @@ export default defineSchema({
     content: v.string(),
     lastUpdated: v.number(),
   }).index("by_key", ["key"]),
+
+  custom_forms: defineTable({
+    name: v.string(),
+    description: v.string(),
+    slug: v.string(),
+    fields: v.array(v.object({
+      id: v.string(),
+      label: v.string(),
+      type: v.union(
+        v.literal("text"), 
+        v.literal("email"), 
+        v.literal("textarea"), 
+        v.literal("select"), 
+        v.literal("number"),
+        v.literal("phone"),
+        v.literal("regex"),
+        v.literal("boolean"),
+        v.literal("date"),
+        v.literal("radio"),
+        v.literal("checkbox"),
+        v.literal("condition_block"),
+        v.literal("address"),
+        v.literal("title"),
+        v.literal("subtitle"),
+        v.literal("separator"),
+        v.literal("stepper")
+      ),
+      required: v.boolean(),
+      options: v.optional(v.array(v.string())),
+      placeholder: v.optional(v.string()),
+      regexPattern: v.optional(v.string()),
+      helpText: v.optional(v.string()),
+      conditions: v.optional(v.array(v.object({
+        fieldId: v.string(),
+        operator: v.union(v.literal("eq"), v.literal("neq")),
+        value: v.string()
+      }))),
+      children: v.optional(v.array(v.any())),
+      conditionRule: v.optional(v.object({
+        fieldId: v.string(),
+        operator: v.union(v.literal("eq"), v.literal("neq"), v.literal("contains"), v.literal("gt"), v.literal("lt")),
+        value: v.string()
+      })),
+      validation: v.optional(v.object({
+        min: v.optional(v.number()),
+        max: v.optional(v.number())
+      })),
+      // Address specific config
+      addressConfig: v.optional(v.object({
+        autoComplete: v.optional(v.boolean()),
+        apiKeyEnvName: v.optional(v.string()),
+        outputFormat: v.optional(v.union(v.literal("default"), v.literal("google"), v.literal("stripe"))),
+        verifyAddress: v.optional(v.boolean())
+      }))
+    })),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_slug", ["slug"]),
 });

@@ -259,9 +259,9 @@ export const getArchivedTasks = query({
 });
 
 export const updateTaskStatus = mutation({
-  args: { 
-    id: v.id("tasks"), 
-    status: v.union(v.literal("todo"), v.literal("in_progress"), v.literal("done")) 
+  args: {
+    id: v.id("tasks"),
+    status: v.union(v.literal("todo"), v.literal("in_progress"), v.literal("done"))
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { status: args.status });
@@ -358,6 +358,179 @@ export const updateSiteContent = mutation({
         lastUpdated: Date.now(),
       });
     }
+  },
+});
+
+// Custom Forms
+
+export const getCustomForms = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("custom_forms").order("desc").collect();
+  },
+});
+
+export const getCustomFormBySlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("custom_forms")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .first();
+  },
+});
+
+export const getCustomFormById = query({
+  args: { id: v.id("custom_forms") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});
+
+export const createCustomForm = mutation({
+  args: {
+    name: v.string(),
+    description: v.string(),
+    slug: v.string(),
+    fields: v.array(v.object({
+      id: v.string(),
+      label: v.string(),
+      type: v.union(
+        v.literal("text"), 
+        v.literal("email"), 
+        v.literal("textarea"), 
+        v.literal("select"), 
+        v.literal("number"),
+        v.literal("phone"),
+        v.literal("regex"),
+        v.literal("boolean"),
+        v.literal("date"),
+        v.literal("radio"),
+        v.literal("checkbox"),
+        v.literal("condition_block"),
+        v.literal("address"),
+        v.literal("title"),
+        v.literal("subtitle"),
+        v.literal("separator"),
+        v.literal("stepper")
+      ),
+      required: v.boolean(),
+      options: v.optional(v.array(v.string())),
+      placeholder: v.optional(v.string()),
+      regexPattern: v.optional(v.string()),
+      helpText: v.optional(v.string()),
+      conditions: v.optional(v.array(v.object({
+        fieldId: v.string(),
+        operator: v.union(v.literal("eq"), v.literal("neq")),
+        value: v.string()
+      }))),
+      children: v.optional(v.array(v.any())),
+      conditionRule: v.optional(v.object({
+        fieldId: v.string(),
+        operator: v.union(v.literal("eq"), v.literal("neq"), v.literal("contains"), v.literal("gt"), v.literal("lt")),
+        value: v.string()
+      })),
+      validation: v.optional(v.object({
+        min: v.optional(v.number()),
+        max: v.optional(v.number())
+      })),
+      addressConfig: v.optional(v.object({
+        autoComplete: v.optional(v.boolean()),
+        apiKeyEnvName: v.optional(v.string()),
+        outputFormat: v.optional(v.union(v.literal("default"), v.literal("google"), v.literal("stripe"))),
+        verifyAddress: v.optional(v.boolean())
+      }))
+    })),
+    isActive: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("custom_forms")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .first();
+      
+    if (existing) {
+        throw new Error("Slug already exists");
+    }
+
+    await ctx.db.insert("custom_forms", {
+      ...args,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const updateCustomForm = mutation({
+  args: {
+    id: v.id("custom_forms"),
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+    slug: v.optional(v.string()),
+    fields: v.optional(v.array(v.object({
+      id: v.string(),
+      label: v.string(),
+      type: v.union(
+        v.literal("text"), 
+        v.literal("email"), 
+        v.literal("textarea"), 
+        v.literal("select"), 
+        v.literal("number"),
+        v.literal("phone"),
+        v.literal("regex"),
+        v.literal("boolean"),
+        v.literal("date"),
+        v.literal("radio"),
+        v.literal("checkbox"),
+        v.literal("condition_block"),
+        v.literal("address"),
+        v.literal("title"),
+        v.literal("subtitle"),
+        v.literal("separator"),
+        v.literal("stepper")
+      ),
+      required: v.boolean(),
+      options: v.optional(v.array(v.string())),
+      placeholder: v.optional(v.string()),
+      regexPattern: v.optional(v.string()),
+      helpText: v.optional(v.string()),
+      conditions: v.optional(v.array(v.object({
+        fieldId: v.string(),
+        operator: v.union(v.literal("eq"), v.literal("neq")),
+        value: v.string()
+      }))),
+      children: v.optional(v.array(v.any())),
+      conditionRule: v.optional(v.object({
+        fieldId: v.string(),
+        operator: v.union(v.literal("eq"), v.literal("neq"), v.literal("contains"), v.literal("gt"), v.literal("lt")),
+        value: v.string()
+      })),
+      validation: v.optional(v.object({
+        min: v.optional(v.number()),
+        max: v.optional(v.number())
+      })),
+      addressConfig: v.optional(v.object({
+        autoComplete: v.optional(v.boolean()),
+        apiKeyEnvName: v.optional(v.string()),
+        outputFormat: v.optional(v.union(v.literal("default"), v.literal("google"), v.literal("stripe"))),
+        verifyAddress: v.optional(v.boolean())
+      }))
+    }))),
+    isActive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...updates } = args;
+    await ctx.db.patch(id, {
+      ...updates,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const deleteCustomForm = mutation({
+  args: { id: v.id("custom_forms") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
   },
 });
 

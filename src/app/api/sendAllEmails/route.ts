@@ -9,38 +9,51 @@ export async function POST(request: Request) {
   try {
     const emailGroup = await request.json();
     const emails = Array.isArray(emailGroup) ? emailGroup : [emailGroup];
-    const results = [];
+    const results = await Promise.all(
+      emails.map(async (emailItem, index) => {
+        const { from, to, subject, templateName, templateProps, text, replyTo, cc, bcc } = emailItem;
+        
+        console.log(`[Email ${index + 1}/${emails.length}] Preparing to send '${subject}' to ${to}`);
+        
+        let reactComponent;
+        try {
+          if (templateName === "gen-inquiry") {
+            // @ts-ignore
+            reactComponent = GenInquiryTemplate(templateProps);
+          } else if (templateName === "chat-message") {
+            // @ts-ignore
+            reactComponent = ChatMessageTemplate(templateProps);
+          }
+        } catch (templateError) {
+           console.error(`[Email ${index + 1}] Template Rendering Error:`, templateError);
+           // Fallback to text only if template fails? Or throw?
+        }
 
-    for (const emailItem of emails) {
-      const { from, to, subject, templateName, templateProps, text, replyTo, cc, bcc } = emailItem;
-      
-      let reactComponent;
-      if (templateName === "gen-inquiry") {
-        // @ts-ignore
-        reactComponent = GenInquiryTemplate(templateProps);
-      } else if (templateName === "chat-message") {
-        // @ts-ignore
-        reactComponent = ChatMessageTemplate(templateProps);
-      }
+        const payload: any = {
+          from: from || "onboarding@resend.dev",
+          to,
+          subject,
+          text,
+          reply_to: replyTo,
+          cc,
+          bcc,
+        };
 
-      const payload: any = {
-        from: from || "onboarding@resend.dev",
-        to,
-        subject,
-        text,
-        reply_to: replyTo,
-        cc,
-        bcc,
-      };
+        if (reactComponent) {
+          payload.react = reactComponent;
+        }
 
-      if (reactComponent) {
-        payload.react = reactComponent;
-      }
-
-      console.log(`Sending email [${templateName}] to ${to}`);
-      const data = await resend.emails.send(payload);
-      results.push(data);
-    }
+        try {
+          console.log(`[Email ${index + 1}] Sending via Resend...`);
+          const data = await resend.emails.send(payload);
+          console.log(`[Email ${index + 1}] Success! ID:`, data.data?.id);
+          return { status: "fulfilled", ...data };
+        } catch (sendError) {
+          console.error(`[Email ${index + 1}] Failed to send:`, sendError);
+          return { status: "rejected", error: sendError };
+        }
+      })
+    );
 
     return NextResponse.json({ status: "ok", data: results });
   } catch (error: any) {

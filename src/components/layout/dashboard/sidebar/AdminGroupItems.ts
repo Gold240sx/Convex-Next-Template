@@ -305,6 +305,16 @@ export const AdminGroups: SectionGroup[] = [
           "bg-sky-100 dark:bg-sky-900 hover:bg-sky-200 dark:hover:bg-sky-800 group-hover/section:bg-sky-200 dark:group-hover/section:bg-sky-800",
         link: "/admin/technologies",
       },
+      // Custom Forms
+      {
+        id: "forms",
+        title: "Forms",
+        icon: FileText,
+        iconColor: "text-teal-600 dark:text-teal-400",
+        iconBgColor:
+          "bg-teal-100 dark:bg-teal-900 hover:bg-teal-200 dark:hover:bg-teal-800 group-hover/section:bg-teal-200 dark:group-hover/section:bg-teal-800",
+        link: "/admin/forms",
+      },
       // Themes
       {
         id: "themes",

@@ -44,6 +44,7 @@ const ChatContents: FC = () => {
 			// Send Emails
 			try {
 				const adminEmail = APP_CONFIG.adminContext?.adminEmail || "240designworks@gmail.com"
+				toast.loading("Sending email confirmation...", { id: "email-sending" })
 				await SendAllEmailsViaAPI([
 					{
 						label: "User Confirmation",
@@ -65,9 +66,11 @@ const ChatContents: FC = () => {
 						templateProps: { firstName: contactInfo.name, email: contactInfo.email, message: contactInfo.message }
 					}
 				])
-				toast.success("Email notification sent!")
+				toast.dismiss("email-sending")
+				toast.success(`Confirmation email sent to ${contactInfo.email}`)
 			} catch (emailError) {
 				console.error("Failed to send emails:", emailError)
+				toast.dismiss("email-sending")
 				toast.error("Failed to send email notification")
 			} 
 		} catch (error) {
@@ -104,6 +107,22 @@ const ChatContents: FC = () => {
 
 	return (
 		<div className="flex flex-col flex-1 min-h-0">
+			{/* Dev Tools Header */}
+            {process.env.NODE_ENV === 'development' && (
+                <div className="p-2 border-b border-zinc-800 flex justify-end">
+                    <Button 
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleTestEmail}
+                        className="text-[10px] h-6 px-2 text-zinc-500 hover:text-white"
+						title="Send Test Email (Dev Only)"
+                    >
+                        Test Email
+                    </Button>
+                </div>
+            )}
+
 			<div className="flex-1 overflow-hidden flex flex-col">
 				<ChatMessages className="flex-1">
 					{isResolved === true && messages.length > 2 && (
@@ -162,14 +181,7 @@ const ChatContents: FC = () => {
 									{isSubmitting ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Send className="w-3 h-3 mr-2" />}
 									Submit to Michael
 								</Button>
-								<Button 
-									type="button"
-									variant="secondary"
-									onClick={handleTestEmail}
-									className="w-full h-9 text-xs mt-2"
-								>
-									Send Test Email (Dev)
-								</Button>
+
 
 							</form>
 						</div>
