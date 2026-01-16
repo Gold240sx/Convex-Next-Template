@@ -251,6 +251,27 @@ export default defineSchema({
     lastUpdated: v.number(),
   }).index("by_key", ["key"]),
 
+  media: defineTable({
+    storageId: v.string(), // ID from Convex file storage
+    url: v.string(),
+    name: v.string(),
+    type: v.string(), // MIME type
+    size: v.number(),
+    folderId: v.optional(v.id("media_folders")),
+    tags: v.optional(v.array(v.string())),
+    createdAt: v.number(),
+  })
+  .index("by_createdAt", ["createdAt"])
+  .index("by_folderId", ["folderId"])
+  .index("by_tags", ["tags"]),
+
+  media_folders: defineTable({
+    name: v.string(),
+    parentId: v.optional(v.id("media_folders")),
+    createdAt: v.number(),
+  })
+  .index("by_parentId", ["parentId"]),
+
   custom_forms: defineTable({
     name: v.string(),
     description: v.string(),
@@ -283,9 +304,12 @@ export default defineSchema({
         v.literal("flex_row"),
         v.literal("star_rating"),
         v.literal("happiness_rating"),
-        v.literal("date_range")
+        v.literal("date_range"),
+        v.literal("richtext"),
+        v.literal("color_picker")
       ),
       required: v.boolean(),
+      content: v.optional(v.string()), // For Rich Text and other static content
       options: v.optional(v.array(v.string())),
       placeholder: v.optional(v.string()),
       regexPattern: v.optional(v.string()),
@@ -298,13 +322,17 @@ export default defineSchema({
       }))),
       children: v.optional(v.array(v.any())),
       conditionRule: v.optional(v.object({
-        fieldId: v.string(),
-        operator: v.union(v.literal("eq"), v.literal("neq"), v.literal("contains"), v.literal("gt"), v.literal("lt")),
-        value: v.string()
+        fieldId: v.optional(v.string()),
+        operator: v.optional(v.union(v.literal("eq"), v.literal("neq"), v.literal("contains"), v.literal("gt"), v.literal("lt"), v.literal("is_empty"), v.literal("is_not_empty"))),
+        value: v.optional(v.string())
       })),
       validation: v.optional(v.object({
         min: v.optional(v.number()),
         max: v.optional(v.number())
+      })),
+      // Email Config
+      emailConfig: v.optional(v.object({
+        businessOnly: v.optional(v.boolean())
       })),
       // Address specific config
       addressConfig: v.optional(v.object({
@@ -328,19 +356,23 @@ export default defineSchema({
       sliderConfig: v.optional(v.object({
         min: v.optional(v.number()),
         max: v.optional(v.number()),
-        step: v.optional(v.number())
+        step: v.optional(v.number()),
+        unit: v.optional(v.union(v.literal("number"), v.literal("percent"), v.literal("currency")))
       })),
       // Image Config
       imageConfig: v.optional(v.object({
         src: v.optional(v.string()),
         alt: v.optional(v.string()),
         width: v.optional(v.number()),
-        height: v.optional(v.number())
+        height: v.optional(v.number()),
+        allowUpload: v.optional(v.boolean()),
+        maxSize: v.optional(v.number()) 
       })),
       // File Upload Config
       fileConfig: v.optional(v.object({
         allowedTypes: v.optional(v.array(v.string())),
-        maxFiles: v.optional(v.number())
+        maxFiles: v.optional(v.number()),
+        maxSize: v.optional(v.number())
       })),
       // Flex Row Config
       flexConfig: v.optional(v.object({
@@ -350,7 +382,8 @@ export default defineSchema({
       })),
       // Star Rating Config
       starRatingConfig: v.optional(v.object({
-        maxStars: v.optional(v.number())
+        maxStars: v.optional(v.number()),
+        defaultValue: v.optional(v.number())
       })),
       // Date Range Config
       dateRangeConfig: v.optional(v.object({
@@ -359,7 +392,8 @@ export default defineSchema({
     })),
     settings: v.optional(v.object({
       isConsecutive: v.optional(v.boolean()),
-      completionEmail: v.optional(v.string()) // Email template to send on completion
+      completionEmail: v.optional(v.string()), // Email template to send on completion
+      chatbotAccess: v.optional(v.boolean()) // Allow chatbot to recommend this form
     })),
     // Open Graph metadata for sharing
     ogMetadata: v.optional(v.object({

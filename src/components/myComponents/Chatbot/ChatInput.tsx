@@ -22,6 +22,8 @@ const ChatInput: FC<ChatInputProps> = ({ className, ...props }) => {
 		updateMessage,
 		isResolved,
 		setIsResolved,
+		suggestedFormSlug,
+		setSuggestedFormSlug,
 	} = useContext(MessagesContext)
 
 	const chatAction = useAction(api.chatbot.chat)
@@ -49,11 +51,23 @@ const ChatInput: FC<ChatInputProps> = ({ className, ...props }) => {
 			})).concat({ role: "user", content: input })
 
 			const response = await chatAction({ messages: chatMessages })
+			
+			let cleanResponse = (response as string) || "";
+			const formMatch = cleanResponse.match(/\[\[SHOW_FORM:([^\]]+)\]\]/);
+			
+			if (formMatch) {
+				const slug = formMatch[1];
+				setSuggestedFormSlug(slug);
+				// Automatically consider it "not resolved yet" because they need to fill the form
+				setIsResolved(false); 
+				// Remove the signal from the displayed text
+				cleanResponse = cleanResponse.replace(/\[\[SHOW_FORM:[^\]]+\]\]/, "").trim();
+			}
 
 			const assistantMessage: Message = {
 				id: nanoid(),
 				role: "assistant",
-				content: response as string,
+				content: cleanResponse,
 				createdAt: Date.now(),
 			}
 

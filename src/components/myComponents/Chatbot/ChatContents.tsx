@@ -2,6 +2,7 @@
 import React, { FC, useContext, useState } from "react"
 import ChatInput from "./ChatInput"
 import ChatMessages from "./ChatMessages"
+import ChatCustomForm from "./ChatCustomForm"
 import { MessagesContext } from "@/context/ChatbotContext"
 import { Button } from "@/components/shadcn/button"
 import { Input } from "@/components/shadcn/input"
@@ -14,7 +15,13 @@ import { SendAllEmailsViaAPI } from "@/functions/sendAllEmails"
 import APP_CONFIG from "@/app-config"
 
 const ChatContents: FC = () => {
-	const { messages, isResolved, setIsResolved } = useContext(MessagesContext)
+	const { 
+		messages, 
+		isResolved, 
+		setIsResolved, 
+		suggestedFormSlug, 
+		setSuggestedFormSlug 
+	} = useContext(MessagesContext)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [contactInfo, setContactInfo] = useState({ name: "", email: "", message: "" })
 	
@@ -144,7 +151,21 @@ const ChatContents: FC = () => {
 						</div>
 					)}
 
-					{isResolved === false && (
+					{isResolved === false && suggestedFormSlug && (
+						<ChatCustomForm 
+							slug={suggestedFormSlug} 
+							onCancel={() => {
+								setSuggestedFormSlug(null);
+								setIsResolved(null);
+							}}
+							onSuccess={() => {
+								setSuggestedFormSlug(null);
+								setIsResolved(true);
+							}}
+						/>
+					)}
+
+					{isResolved === false && !suggestedFormSlug && (
 						<div className="p-4 bg-zinc-900 border-t border-zinc-800 animate-in fade-in slide-in-from-bottom-4 duration-500 rounded-t-xl mx-1 shrink-0">
 							<h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
 								<Send className="w-4 h-4 text-teal-500" />
@@ -181,8 +202,6 @@ const ChatContents: FC = () => {
 									{isSubmitting ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Send className="w-3 h-3 mr-2" />}
 									Submit to Michael
 								</Button>
-
-
 							</form>
 						</div>
 					)}

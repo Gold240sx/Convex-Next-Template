@@ -41,7 +41,7 @@ import { useRouter } from "next/navigation"
 
 export default function FormsPage() {
     const router = useRouter()
-    const forms = useQuery(api.myFunctions.getCustomForms)
+    const forms = useQuery(api.myFunctions.getAllCustomForms)
     const createForm = useMutation(api.myFunctions.createCustomForm)
     const updateForm = useMutation(api.myFunctions.updateCustomForm)
     const deleteForm = useMutation(api.myFunctions.deleteCustomForm)
@@ -173,8 +173,12 @@ export default function FormsPage() {
                     </div>
                 ) : (
                     forms.map((form) => (
-                        <div key={form._id} className="group bg-card border border-border rounded-3xl p-6 hover:shadow-xl hover:shadow-teal-500/5 hover:border-teal-500/30 transition-all duration-300 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div 
+                            key={form._id} 
+                            onClick={() => router.push(`/admin/forms/${form._id}`)}
+                            className="group bg-card border border-border rounded-3xl p-6 hover:shadow-xl hover:shadow-teal-500/5 hover:border-teal-500/30 transition-all duration-300 relative overflow-hidden cursor-pointer"
+                        >
+                            <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => e.stopPropagation()}>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted rounded-full">
@@ -182,15 +186,15 @@ export default function FormsPage() {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => router.push(`/admin/forms/${form._id}`)}>
+                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/admin/forms/${form._id}`); }}>
                                             <Pencil className="w-4 h-4 mr-2" />
                                             Edit Builder
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleToggleActive(form._id, form.isActive)}>
+                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleActive(form._id, form.isActive); }}>
                                             {form.isActive ? <XCircle className="w-4 h-4 mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
                                             {form.isActive ? "Deactivate" : "Activate"}
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="text-rose-500 focus:text-rose-500" onClick={() => handleDelete(form._id)}>
+                                        <DropdownMenuItem className="text-rose-500 focus:text-rose-500" onClick={(e) => { e.stopPropagation(); handleDelete(form._id); }}>
                                             <Trash2 className="w-4 h-4 mr-2" />
                                             Delete
                                         </DropdownMenuItem>
@@ -198,7 +202,7 @@ export default function FormsPage() {
                                 </DropdownMenu>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-4 pointer-events-none">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
                                         <h3 className="font-bold text-lg text-foreground">{form.name}</h3>

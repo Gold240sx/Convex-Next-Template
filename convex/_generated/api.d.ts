@@ -9,6 +9,12 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as authorized_actions from "../authorized/actions.js";
+import type * as authorized_create from "../authorized/create.js";
+import type * as authorized_delete from "../authorized/delete.js";
+import type * as authorized_read from "../authorized/read.js";
+import type * as authorized_storage from "../authorized/storage.js";
+import type * as authorized_update from "../authorized/update.js";
 import type * as certificates from "../certificates.js";
 import type * as chatbot from "../chatbot.js";
 import type * as chatbotData_websiteSourceMap from "../chatbotData/websiteSourceMap.js";
@@ -19,6 +25,8 @@ import type * as myFunctions from "../myFunctions.js";
 import type * as rateLimiter from "../rateLimiter.js";
 import type * as seoMetadata from "../seoMetadata.js";
 import type * as technologies from "../technologies.js";
+import type * as unauthorized_create from "../unauthorized/create.js";
+import type * as unauthorized_read from "../unauthorized/read.js";
 import type * as variants from "../variants.js";
 
 import type {
@@ -29,6 +37,12 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  "authorized/actions": typeof authorized_actions;
+  "authorized/create": typeof authorized_create;
+  "authorized/delete": typeof authorized_delete;
+  "authorized/read": typeof authorized_read;
+  "authorized/storage": typeof authorized_storage;
+  "authorized/update": typeof authorized_update;
   certificates: typeof certificates;
   chatbot: typeof chatbot;
   "chatbotData/websiteSourceMap": typeof chatbotData_websiteSourceMap;
@@ -39,6 +53,8 @@ declare const fullApi: ApiFromModules<{
   rateLimiter: typeof rateLimiter;
   seoMetadata: typeof seoMetadata;
   technologies: typeof technologies;
+  "unauthorized/create": typeof unauthorized_create;
+  "unauthorized/read": typeof unauthorized_read;
   variants: typeof variants;
 }>;
 

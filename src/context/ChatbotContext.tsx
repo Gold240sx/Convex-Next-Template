@@ -13,6 +13,8 @@ export const MessagesContext = createContext<{
 	setIsMessageUpdating: (isUpdating: boolean) => void;
 	isResolved: boolean | null;
 	setIsResolved: (status: boolean | null) => void;
+	suggestedFormSlug: string | null;
+	setSuggestedFormSlug: (slug: string | null) => void;
 }>({
 	messages: [],
 	isMessageUpdating: false,
@@ -22,11 +24,14 @@ export const MessagesContext = createContext<{
 	setIsMessageUpdating: () => {},
 	isResolved: null,
 	setIsResolved: () => {},
+	suggestedFormSlug: null,
+	setSuggestedFormSlug: () => {},
 });
 
 export const MessagesProvider = ({ children }: { children: ReactNode }) => {
 	const [isMessageUpdating, setIsMessageUpdating] = useState<boolean>(false);
 	const [isResolved, setIsResolved] = useState<boolean | null>(null);
+	const [suggestedFormSlug, setSuggestedFormSlug] = useState<string | null>(null);
 	const [messages, setMessages] = useState<Message[]>([
 		{
 			id: "initial-assistant-message",
@@ -71,6 +76,8 @@ export const MessagesProvider = ({ children }: { children: ReactNode }) => {
 				setIsMessageUpdating,
 				isResolved,
 				setIsResolved,
+				suggestedFormSlug,
+				setSuggestedFormSlug,
 			}}>
 			{children}
 		</MessagesContext.Provider>
